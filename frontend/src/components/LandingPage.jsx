@@ -235,20 +235,22 @@ const LandingPage = ({ connectWallet, isConnecting }) => {
                 </svg>
                 Whitepaper
               </a>
-              <a href="#" className="ln-dropdown-item">
+              <span className="ln-dropdown-item ln-coming-soon">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
                   <path d="M3 3h18M3 9h18M3 15h18M3 21h18"
                     stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
                 </svg>
                 Governance
-              </a>
-              <a href="#" className="ln-dropdown-item">
+                <span className="ln-soon-badge">Soon</span>
+              </span>
+              <span className="ln-dropdown-item ln-coming-soon">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
                   <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"
                     stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
                 Community
-              </a>
+                <span className="ln-soon-badge">Soon</span>
+              </span>
               <a href="https://github.com/Ra9huvansh/Merix-Holdings" target="_blank" rel="noopener noreferrer" className="ln-dropdown-item">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
                   <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0020 4.77 5.07 5.07 0 0019.91 1S18.73.65 16 2.48a13.38 13.38 0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 005 4.77a5.44 5.44 0 00-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 009 18.13V22"

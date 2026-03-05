@@ -97,6 +97,29 @@ html, body {
 .ln-admin-item {
   color: #a78bfa;
 }
+.ln-coming-soon {
+  opacity: 0.4;
+  cursor: default;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.ln-soon-badge {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 20px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.5);
+  margin-left: auto;
+}
+
 .ln-admin-item:hover {
   color: #c4b5fd;
   background: rgba(167,139,250,0.1);
