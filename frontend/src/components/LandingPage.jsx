@@ -221,7 +221,7 @@ const LandingPage = ({ connectWallet, isConnecting }) => {
           </button>
           {dropdownOpen && (
             <div className="ln-dropdown-menu">
-              <a href="#" className="ln-dropdown-item">
+              <a href="https://merix-doc.vercel.app" target="_blank" rel="noopener noreferrer" className="ln-dropdown-item">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
                   <path d="M9 12h6M9 16h6M9 8h6M5 3h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2z"
                     stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
@@ -532,7 +532,7 @@ const LandingPage = ({ connectWallet, isConnecting }) => {
             <div className="footer-links">
               <div className="footer-column">
                 <h4 className="footer-heading">Protocol</h4>
-                <a href="#" className="footer-link">Documentation</a>
+                <a href="https://merix-doc.vercel.app" target="_blank" rel="noopener noreferrer" className="footer-link">Documentation</a>
                 <a href="#" className="footer-link">Security</a>
                 <a href="#" className="footer-link">Audits</a>
               </div>
