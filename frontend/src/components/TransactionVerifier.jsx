@@ -435,30 +435,24 @@ You MUST respond with ONLY a valid JSON object, no other text:
             <div className="verifier-info-item">
               <div className="verifier-info-number">01</div>
               <div className="verifier-info-content">
-                <strong>Extract Selector</strong>
-                <p>First 4 bytes of calldata identify the function</p>
+                <strong>Decode the Transaction</strong>
+                <p>Extracts the 4-byte function selector and resolves it to a human-readable name — so you know exactly what function is being called before signing</p>
               </div>
             </div>
             <div className="verifier-info-item">
               <div className="verifier-info-number">02</div>
               <div className="verifier-info-content">
-                <strong>AI Analysis</strong>
-                <p>Advanced LLM detects malicious patterns</p>
+                <strong>AI Reads the Calldata</strong>
+                <p>Runs Ollama locally first, falls back to Groq, then heuristics — looks for unlimited approvals, suspicious recipients, proxy hijacks, and known attack patterns</p>
               </div>
             </div>
             <div className="verifier-info-item">
               <div className="verifier-info-number">03</div>
               <div className="verifier-info-content">
-                <strong>Risk Assessment</strong>
-                <p>Comprehensive security evaluation</p>
+                <strong>Flags What Matters</strong>
+                <p>Returns a clear risk rating — Safe, Low, Medium, High, or Critical — with a plain-English explanation of what was found and whether you should sign</p>
               </div>
             </div>
-          </div>
-          <div className="verifier-info-note">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-              <path d="M12 16V12M12 8H12.01M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            <span>Uses local Ollama when available. On Vercel, add <code>VITE_GROQ_API_KEY</code> as an environment variable for cloud AI fallback.</span>
           </div>
         </div>
       </div>
