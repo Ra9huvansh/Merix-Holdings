@@ -3,6 +3,8 @@ export const DSC_TOKEN_ADDRESS = import.meta.env.VITE_DSC_TOKEN_ADDRESS || "";
 export const WETH_ADDRESS = import.meta.env.VITE_WETH_ADDRESS || "";
 export const WBTC_ADDRESS = import.meta.env.VITE_WBTC_ADDRESS || "";
 export const CHAIN_ID = parseInt(import.meta.env.VITE_CHAIN_ID || "31337");
+export const YIELD_AGGREGATOR_ADDRESS = import.meta.env.VITE_YIELD_AGGREGATOR_ADDRESS || "";
+export const REDEMPTION_CONTRACT_ADDRESS = import.meta.env.VITE_REDEMPTION_CONTRACT_ADDRESS || "";
 
 export const TOKEN_INFO = {
   [WETH_ADDRESS.toLowerCase()]: {

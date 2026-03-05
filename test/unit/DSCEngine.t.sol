@@ -226,8 +226,201 @@ contract DSCEngineTest is Test {
         assertEq(userBalance, AMOUNT_DSC_TO_MINT);
     }
 
-     /*//////////////////////////////////////////////////////////////
+    /*//////////////////////////////////////////////////////////////
                              BURNDSC TESTS
     //////////////////////////////////////////////////////////////*/
-    
+
+    /*//////////////////////////////////////////////////////////////
+                   setRedemptionContract TESTS
+    //////////////////////////////////////////////////////////////*/
+
+    function testSetRedemptionContract() public {
+        address rc = makeAddr("rc");
+        vm.prank(vm.addr(deployerKey));
+        dsce.setRedemptionContract(rc);
+        assertEq(dsce.redemptionContract(), rc);
+    }
+
+    function testSetRedemptionContractRevertsIfNotOwner() public {
+        address rc = makeAddr("rc");
+        vm.prank(USER);
+        vm.expectRevert();
+        dsce.setRedemptionContract(rc);
+    }
+
+    function testSetRedemptionContractCanBeUpdated() public {
+        address rc1 = makeAddr("rc1");
+        address rc2 = makeAddr("rc2");
+        address owner = vm.addr(deployerKey);
+        vm.prank(owner);
+        dsce.setRedemptionContract(rc1);
+        vm.prank(owner);
+        dsce.setRedemptionContract(rc2);
+        assertEq(dsce.redemptionContract(), rc2);
+    }
+
+    /*//////////////////////////////////////////////////////////////
+                   depositCollateralFor TESTS
+    //////////////////////////////////////////////////////////////*/
+
+    function testDepositCollateralForRevertsIfNotRedemptionContract() public {
+        vm.prank(USER);
+        vm.expectRevert("DSCEngine: not authorised");
+        dsce.depositCollateralFor(USER, weth, AMOUNT_COLLATERAL);
+    }
+
+    function testDepositCollateralForRevertsIfNoRedemptionContractSet() public {
+        // redemptionContract is address(0) by default — also not authorised
+        vm.expectRevert("DSCEngine: not authorised");
+        dsce.depositCollateralFor(USER, weth, AMOUNT_COLLATERAL);
+    }
+
+    function testDepositCollateralForCreditsCorrectUser() public {
+        address mockRC = makeAddr("mockRC");
+        vm.prank(vm.addr(deployerKey));
+        dsce.setRedemptionContract(mockRC);
+
+        ERC20Mock(weth).mint(mockRC, AMOUNT_COLLATERAL);
+
+        vm.startPrank(mockRC);
+        ERC20Mock(weth).approve(address(dsce), AMOUNT_COLLATERAL);
+        dsce.depositCollateralFor(USER, weth, AMOUNT_COLLATERAL);
+        vm.stopPrank();
+
+        (, uint256 collateralValueInUsd) = dsce.getAccountInformation(USER);
+        uint256 expectedCollateral = dsce.getUsdValue(weth, AMOUNT_COLLATERAL);
+        assertEq(collateralValueInUsd, expectedCollateral);
+    }
+
+    function testDepositCollateralForDoesNotCreditCaller() public {
+        address mockRC = makeAddr("mockRC");
+        vm.prank(vm.addr(deployerKey));
+        dsce.setRedemptionContract(mockRC);
+
+        ERC20Mock(weth).mint(mockRC, AMOUNT_COLLATERAL);
+
+        vm.startPrank(mockRC);
+        ERC20Mock(weth).approve(address(dsce), AMOUNT_COLLATERAL);
+        dsce.depositCollateralFor(USER, weth, AMOUNT_COLLATERAL);
+        vm.stopPrank();
+
+        // Collateral must be credited to USER, not mockRC
+        (, uint256 rcCollateral) = dsce.getAccountInformation(mockRC);
+        assertEq(rcCollateral, 0);
+    }
+
+    function testDepositCollateralForRevertsIfAmountZero() public {
+        address mockRC = makeAddr("mockRC");
+        vm.prank(vm.addr(deployerKey));
+        dsce.setRedemptionContract(mockRC);
+
+        vm.prank(mockRC);
+        vm.expectRevert(DSCEngine.DSCEngine__NeedsMoreThanZero.selector);
+        dsce.depositCollateralFor(USER, weth, 0);
+    }
+
+    function testDepositCollateralForRevertsIfTokenNotAllowed() public {
+        address mockRC = makeAddr("mockRC");
+        vm.prank(vm.addr(deployerKey));
+        dsce.setRedemptionContract(mockRC);
+
+        address alienToken = makeAddr("alienToken");
+        vm.prank(mockRC);
+        vm.expectRevert(
+            abi.encodeWithSelector(DSCEngine.DSCEngine__TokenNotAllowed.selector, alienToken)
+        );
+        dsce.depositCollateralFor(USER, alienToken, AMOUNT_COLLATERAL);
+    }
+
+    function testDepositCollateralForEmitsEvent() public {
+        address mockRC = makeAddr("mockRC");
+        vm.prank(vm.addr(deployerKey));
+        dsce.setRedemptionContract(mockRC);
+
+        ERC20Mock(weth).mint(mockRC, AMOUNT_COLLATERAL);
+
+        vm.startPrank(mockRC);
+        ERC20Mock(weth).approve(address(dsce), AMOUNT_COLLATERAL);
+        vm.expectEmit(true, true, true, true);
+        emit DSCEngine.CollateralDeposited(USER, weth, AMOUNT_COLLATERAL);
+        dsce.depositCollateralFor(USER, weth, AMOUNT_COLLATERAL);
+        vm.stopPrank();
+    }
+
+    /*//////////////////////////////////////////////////////////////
+                       burnExternal TESTS
+    //////////////////////////////////////////////////////////////*/
+
+    function testBurnExternalRevertsIfNotRedemptionContract() public {
+        vm.prank(USER);
+        vm.expectRevert("DSCEngine: not authorised");
+        dsce.burnExternal(100e18);
+    }
+
+    function testBurnExternalBurnsDsc() public depositedCollateralAndMintedDsc {
+        address mockRC = makeAddr("mockRC");
+        vm.prank(vm.addr(deployerKey));
+        dsce.setRedemptionContract(mockRC);
+
+        // Transfer DSC from USER to mockRC
+        vm.prank(USER);
+        dsc.transfer(mockRC, AMOUNT_DSC_TO_MINT);
+
+        uint256 supplyBefore = dsc.totalSupply();
+
+        vm.startPrank(mockRC);
+        dsc.approve(address(dsce), AMOUNT_DSC_TO_MINT);
+        dsce.burnExternal(AMOUNT_DSC_TO_MINT);
+        vm.stopPrank();
+
+        assertEq(dsc.totalSupply(), supplyBefore - AMOUNT_DSC_TO_MINT);
+    }
+
+    function testBurnExternalRevertsIfAmountZero() public {
+        address mockRC = makeAddr("mockRC");
+        vm.prank(vm.addr(deployerKey));
+        dsce.setRedemptionContract(mockRC);
+
+        vm.prank(mockRC);
+        vm.expectRevert(DSCEngine.DSCEngine__NeedsMoreThanZero.selector);
+        dsce.burnExternal(0);
+    }
+
+    function testBurnExternalDoesNotModifyAnyUserDscMinted() public depositedCollateralAndMintedDsc {
+        address mockRC = makeAddr("mockRC");
+        vm.prank(vm.addr(deployerKey));
+        dsce.setRedemptionContract(mockRC);
+
+        vm.prank(USER);
+        dsc.transfer(mockRC, AMOUNT_DSC_TO_MINT);
+
+        (uint256 dscMintedBefore,) = dsce.getAccountInformation(USER);
+
+        vm.startPrank(mockRC);
+        dsc.approve(address(dsce), AMOUNT_DSC_TO_MINT);
+        dsce.burnExternal(AMOUNT_DSC_TO_MINT);
+        vm.stopPrank();
+
+        // burnExternal must NOT touch s_DSCMinted for USER
+        (uint256 dscMintedAfter,) = dsce.getAccountInformation(USER);
+        assertEq(dscMintedAfter, dscMintedBefore);
+    }
+
+    function testBurnExternalReducesDscBalance() public depositedCollateralAndMintedDsc {
+        address mockRC = makeAddr("mockRC");
+        vm.prank(vm.addr(deployerKey));
+        dsce.setRedemptionContract(mockRC);
+
+        vm.prank(USER);
+        dsc.transfer(mockRC, AMOUNT_DSC_TO_MINT);
+
+        uint256 rcBalanceBefore = dsc.balanceOf(mockRC);
+
+        vm.startPrank(mockRC);
+        dsc.approve(address(dsce), AMOUNT_DSC_TO_MINT);
+        dsce.burnExternal(AMOUNT_DSC_TO_MINT);
+        vm.stopPrank();
+
+        assertEq(dsc.balanceOf(mockRC), rcBalanceBefore - AMOUNT_DSC_TO_MINT);
+    }
 }

@@ -1,8 +1,22 @@
 import { useEffect, useRef, useState } from "react";
+import AdminPanel from "./AdminPanel";
 
 const LandingPage = ({ connectWallet, isConnecting }) => {
   const [scrollY, setScrollY] = useState(0);
   const heroRef = useRef(null);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [adminOpen, setAdminOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -103,6 +117,77 @@ const LandingPage = ({ connectWallet, isConnecting }) => {
 
   return (
     <div className="landing-page">
+
+      {/* Top Nav — hamburger only */}
+      <nav className="landing-nav">
+        <div className="ln-hamburger-wrap" ref={dropdownRef}>
+          <button
+            className="ln-hamburger"
+            onClick={() => setDropdownOpen((o) => !o)}
+            aria-label="Menu"
+          >
+            <span /><span /><span />
+          </button>
+          {dropdownOpen && (
+            <div className="ln-dropdown-menu">
+              <a href="#" className="ln-dropdown-item">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                  <path d="M9 12h6M9 16h6M9 8h6M5 3h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2z"
+                    stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+                Documentation
+              </a>
+              <a href="#" className="ln-dropdown-item">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"
+                    stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                Whitepaper
+              </a>
+              <a href="#" className="ln-dropdown-item">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                  <path d="M3 3h18M3 9h18M3 15h18M3 21h18"
+                    stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+                Governance
+              </a>
+              <a href="#" className="ln-dropdown-item">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                  <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"
+                    stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                Community
+              </a>
+              <a href="#" className="ln-dropdown-item">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                  <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0020 4.77 5.07 5.07 0 0019.91 1S18.73.65 16 2.48a13.38 13.38 0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 005 4.77a5.44 5.44 0 00-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 009 18.13V22"
+                    stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                GitHub
+              </a>
+              <div className="ln-dropdown-divider" />
+              <button
+                className="ln-dropdown-item ln-admin-item"
+                onClick={() => { setDropdownOpen(false); setAdminOpen(true); }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"
+                    fill="currentColor" opacity="0.8"/>
+                </svg>
+                Admin Panel
+              </button>
+            </div>
+          )}
+        </div>
+      </nav>
+
+      <AdminPanel
+        isOpen={adminOpen}
+        onClose={() => setAdminOpen(false)}
+        connectWallet={connectWallet}
+        isConnecting={isConnecting}
+      />
+
       {/* Hero Section */}
       <section className="hero" ref={heroRef}>
         <div className="hero-background" style={{ transform: `translateY(${scrollY * 0.5}px)` }}></div>

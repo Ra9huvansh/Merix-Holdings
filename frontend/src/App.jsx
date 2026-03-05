@@ -11,12 +11,15 @@ import RedeemCollateral from "./components/RedeemCollateral";
 import BurnDSC from "./components/BurnDSC";
 import Liquidation from "./components/Liquidation";
 import TransactionVerifier from "./components/TransactionVerifier";
+import YieldTerminal from "./components/YieldTerminal";
+import AdminPanel from "./components/AdminPanel";
 import "./App.css";
 
 function App() {
   const { account, isConnected, connectWallet, disconnectWallet, isConnecting } = useWeb3();
   const { accountInfo, loading } = useDSCEngine();
   const [activeTab, setActiveTab] = useState("dashboard");
+  const [adminOpen, setAdminOpen] = useState(false);
 
   if (!isConnected) {
     return <LandingPage connectWallet={connectWallet} isConnecting={isConnecting} />;
@@ -52,7 +55,18 @@ function App() {
               <span className="health-label">Health</span>
               <span className="health-value">{accountInfo.healthFactor}</span>
             </div>
-            <button 
+            <button
+              className="admin-header-btn"
+              onClick={() => setAdminOpen(true)}
+              title="Admin Panel"
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+                <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"
+                  fill="currentColor" opacity="0.85"/>
+              </svg>
+              Admin
+            </button>
+            <button
               className="disconnect-button"
               onClick={disconnectWallet}
               title="Disconnect wallet"
@@ -98,11 +112,17 @@ function App() {
           >
             <span>Burn DSC</span>
           </button>
-          <button 
+          <button
             className={activeTab === "liquidate" ? "nav-button active" : "nav-button"}
             onClick={() => setActiveTab("liquidate")}
           >
             <span>Liquidate</span>
+          </button>
+          <button
+            className={activeTab === "yield" ? "nav-button active yield-nav-button" : "nav-button yield-nav-button"}
+            onClick={() => setActiveTab("yield")}
+          >
+            <span>Yield</span>
           </button>
           <div className="nav-divider"></div>
           <button 
@@ -132,8 +152,16 @@ function App() {
         {activeTab === "redeem" && <RedeemCollateral />}
         {activeTab === "burn" && <BurnDSC />}
         {activeTab === "liquidate" && <Liquidation />}
+        {activeTab === "yield" && <YieldTerminal />}
         {activeTab === "verify" && <TransactionVerifier />}
       </main>
+
+      <AdminPanel
+        isOpen={adminOpen}
+        onClose={() => setAdminOpen(false)}
+        connectWallet={connectWallet}
+        isConnecting={isConnecting}
+      />
     </div>
   );
 }

@@ -27,10 +27,11 @@ pragma solidity ^0.8.18;
 
 import {DecentralizedStableCoin} from "./DecentralizedStableCoin.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import {console} from "forge-std/Test.sol";
-import {OracleLib} from "./libraries/OracleLib.sol"; 
+import {OracleLib} from "./libraries/OracleLib.sol";
 
 /**
  * @title DSCEngine
@@ -53,7 +54,7 @@ import {OracleLib} from "./libraries/OracleLib.sol";
  * @notice This contract is based on the MakerDAO DSS system.
  */
 
-contract DSCEngine is ReentrancyGuard{
+contract DSCEngine is ReentrancyGuard, Ownable {
 
     /*//////////////////////////////////////////////////////////////
                                  TYPES
@@ -83,6 +84,7 @@ contract DSCEngine is ReentrancyGuard{
     mapping(address user => mapping(address token => uint256 amount)) private s_collateralDeposited;
     mapping(address user => uint256 amountDscMinted) private s_DSCMinted;
     address[] private s_collateralTokens;
+    address public redemptionContract;
 
     uint256 private constant ADDITIONAL_FEED_PRECISION = 1e10;
     uint256 private constant PRECISION = 1e18;
@@ -117,11 +119,16 @@ contract DSCEngine is ReentrancyGuard{
         _;
     }
 
+    modifier onlyRedemptionContract() {
+        require(msg.sender == redemptionContract, "DSCEngine: not authorised");
+        _;
+    }
+
     /*//////////////////////////////////////////////////////////////
                                FUNCTIONS
     //////////////////////////////////////////////////////////////*/
 
-    constructor(address[] memory tokenAddresses, address[] memory priceFeedAddresses, address dscAddress){
+    constructor(address[] memory tokenAddresses, address[] memory priceFeedAddresses, address dscAddress) Ownable(msg.sender) {
         if(tokenAddresses.length != priceFeedAddresses.length){
             revert DSCEngine__TokenAddressesAndPriceFeedAddressesMustBeSameLength();
         }
@@ -199,6 +206,47 @@ contract DSCEngine is ReentrancyGuard{
     function burnDsc(uint256 amount) public moreThanZero(amount) {
         _burnDsc(amount, msg.sender, msg.sender);
         _revertIfHealthFactorIsBroken(msg.sender); //Not required, as burning of DSC will only make the Health Factor better.
+    }
+
+    /*
+     * @param rc Address of the deployed RedemptionContract
+     * @notice Must be called after deploying RedemptionContract to authorise it.
+     */
+    function setRedemptionContract(address rc) external onlyOwner {
+        redemptionContract = rc;
+    }
+
+    /*
+     * @param user The address to credit the deposited collateral to
+     * @param tokenCollateralAddress The ERC20 token to deposit as collateral
+     * @param amountCollateral The amount to deposit (pulled from msg.sender)
+     * @notice Only callable by the authorised RedemptionContract.
+     */
+    function depositCollateralFor(
+        address user,
+        address tokenCollateralAddress,
+        uint256 amountCollateral
+    ) external onlyRedemptionContract moreThanZero(amountCollateral) isAllowedToken(tokenCollateralAddress) nonReentrant {
+        s_collateralDeposited[user][tokenCollateralAddress] += amountCollateral;
+        emit CollateralDeposited(user, tokenCollateralAddress, amountCollateral);
+        bool success = IERC20(tokenCollateralAddress).transferFrom(msg.sender, address(this), amountCollateral);
+        if (!success) {
+            revert DSCEngine__TransferFailed();
+        }
+    }
+
+    /*
+     * @param amount DSC amount to burn
+     * @notice Burns circulating DSC transferred from the RedemptionContract.
+     *         Does NOT modify s_DSCMinted — reduces total DSC supply permanently.
+     *         Only callable by the authorised RedemptionContract.
+     */
+    function burnExternal(uint256 amount) external onlyRedemptionContract moreThanZero(amount) nonReentrant {
+        bool success = i_dsc.transferFrom(msg.sender, address(this), amount);
+        if (!success) {
+            revert DSCEngine__TransferFailed();
+        }
+        i_dsc.burn(amount);
     }
 
     /*

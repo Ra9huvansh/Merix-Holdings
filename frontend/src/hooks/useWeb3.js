@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ethers } from "ethers";
 import { CHAIN_ID } from "../constants/addresses";
 
@@ -8,19 +8,8 @@ export const useWeb3 = () => {
   const [account, setAccount] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
-  
-  // Check if user explicitly disconnected
-  const wasExplicitlyDisconnected = () => {
-    return localStorage.getItem("wallet_explicitly_disconnected") === "true";
-  };
-  
-  const setExplicitlyDisconnected = (value) => {
-    if (value) {
-      localStorage.setItem("wallet_explicitly_disconnected", "true");
-    } else {
-      localStorage.removeItem("wallet_explicitly_disconnected");
-    }
-  };
+  // Prevents accountsChanged events fired mid-connect from interfering
+  const connectingRef = useRef(false);
 
   const connectWallet = async () => {
     if (typeof window.ethereum === "undefined") {
@@ -29,29 +18,22 @@ export const useWeb3 = () => {
     }
 
     setIsConnecting(true);
+    connectingRef.current = true;
     try {
-      // Force MetaMask to show account selection dialog by requesting permissions
-      // Using wallet_requestPermissions ensures the user can select which account to connect
-      // This works even if permissions already exist - it will show the account selection
+      // Show account picker so user can choose a different address
       try {
         await window.ethereum.request({
           method: "wallet_requestPermissions",
           params: [{ eth_accounts: {} }],
         });
       } catch (permError) {
-        // If user rejects, that's fine - we'll handle it below
-        if (permError.code === 4001) {
-          // User rejected the connection
-          return;
-        }
-        // If wallet_requestPermissions doesn't work, fall back to eth_requestAccounts
-        // This might happen with some wallet implementations
-        console.log("wallet_requestPermissions not supported, using eth_requestAccounts");
+        if (permError.code === 4001) return; // user cancelled
+        // unsupported by this wallet — fall through to eth_requestAccounts
       }
 
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      const network = await provider.getNetwork();
-      
+      const p = new ethers.BrowserProvider(window.ethereum);
+      const network = await p.getNetwork();
+
       if (Number(network.chainId) !== CHAIN_ID) {
         try {
           await window.ethereum.request({
@@ -59,31 +41,21 @@ export const useWeb3 = () => {
             params: [{ chainId: `0x${CHAIN_ID.toString(16)}` }],
           });
         } catch (switchError) {
-          if (switchError.code === 4902) {
-            // Chain doesn't exist in MetaMask, try to add it
-            if (CHAIN_ID === 11155111) {
-              // Sepolia testnet
-              try {
-                await window.ethereum.request({
-                  method: "wallet_addEthereumChain",
-                  params: [{
-                    chainId: `0x${CHAIN_ID.toString(16)}`,
-                    chainName: "Sepolia",
-                    nativeCurrency: {
-                      name: "ETH",
-                      symbol: "ETH",
-                      decimals: 18
-                    },
-                    rpcUrls: ["https://sepolia.infura.io/v3/"],
-                    blockExplorerUrls: ["https://sepolia.etherscan.io"]
-                  }]
-                });
-              } catch (addError) {
-                alert("Please add Sepolia network to MetaMask manually:\n\nNetwork Name: Sepolia\nRPC URL: https://sepolia.infura.io/v3/YOUR_INFURA_KEY\nChain ID: 11155111\nCurrency Symbol: ETH\nBlock Explorer: https://sepolia.etherscan.io");
-                throw addError;
-              }
-            } else {
-              alert(`Please add chain with ID ${CHAIN_ID} to MetaMask`);
+          if (switchError.code === 4902 && CHAIN_ID === 11155111) {
+            try {
+              await window.ethereum.request({
+                method: "wallet_addEthereumChain",
+                params: [{
+                  chainId: `0x${CHAIN_ID.toString(16)}`,
+                  chainName: "Sepolia",
+                  nativeCurrency: { name: "ETH", symbol: "ETH", decimals: 18 },
+                  rpcUrls: ["https://sepolia.infura.io/v3/"],
+                  blockExplorerUrls: ["https://sepolia.etherscan.io"],
+                }],
+              });
+            } catch {
+              alert("Please add Sepolia network to MetaMask manually.");
+              return;
             }
           } else {
             throw switchError;
@@ -91,82 +63,90 @@ export const useWeb3 = () => {
         }
       }
 
-      // Now get the accounts - this will use the account selected in the permissions dialog
-      const accounts = await provider.send("eth_requestAccounts", []);
-      
-      if (!accounts || accounts.length === 0) {
-        throw new Error("No accounts selected");
-      }
+      const accounts = await p.send("eth_requestAccounts", []);
+      if (!accounts || accounts.length === 0) throw new Error("No accounts selected");
 
-      const signer = await provider.getSigner();
-
-      setProvider(provider);
-      setSigner(signer);
+      const s = await p.getSigner();
+      // Only clear the disconnect flag on actual successful connection
+      localStorage.removeItem("wallet_disconnected");
+      setProvider(p);
+      setSigner(s);
       setAccount(accounts[0]);
       setIsConnected(true);
-      // Clear the explicit disconnect flag when user manually connects
-      setExplicitlyDisconnected(false);
     } catch (error) {
-      console.error("Error connecting wallet:", error);
-      if (error.code === 4001) {
-        // User rejected the connection
-        return;
+      if (error.code !== 4001) {
+        console.error("Error connecting wallet:", error);
+        alert("Failed to connect wallet: " + (error.message || error));
       }
-      alert("Failed to connect wallet: " + (error.message || error));
     } finally {
       setIsConnecting(false);
+      connectingRef.current = false;
     }
   };
 
   const disconnectWallet = () => {
+    localStorage.setItem("wallet_disconnected", "true");
     setProvider(null);
     setSigner(null);
     setAccount(null);
     setIsConnected(false);
-    // Mark that user explicitly disconnected
-    setExplicitlyDisconnected(true);
   };
 
   useEffect(() => {
-    if (typeof window.ethereum !== "undefined") {
-      const checkConnection = async () => {
-        // Don't auto-connect if user explicitly disconnected
-        if (wasExplicitlyDisconnected()) {
-          return;
+    if (typeof window.ethereum === "undefined") return;
+
+    // Auto-connect on load only if user hasn't explicitly disconnected
+    const init = async () => {
+      if (localStorage.getItem("wallet_disconnected") === "true") return;
+      try {
+        const p = new ethers.BrowserProvider(window.ethereum);
+        const accounts = await p.listAccounts();
+        if (accounts.length > 0) {
+          const s = await p.getSigner();
+          setProvider(p);
+          setSigner(s);
+          setAccount(accounts[0].address);
+          setIsConnected(true);
         }
-        
-        try {
-          const provider = new ethers.BrowserProvider(window.ethereum);
-          const accounts = await provider.listAccounts();
-          if (accounts.length > 0) {
-            const signer = await provider.getSigner();
-            setProvider(provider);
-            setSigner(signer);
-            setAccount(accounts[0].address);
+      } catch (e) {
+        console.error("Auto-connect error:", e);
+      }
+    };
+    init();
+
+    const handleAccountsChanged = (accounts) => {
+      // Ignore all mid-connect events
+      if (connectingRef.current) return;
+
+      if (accounts.length === 0) {
+        setProvider(null);
+        setSigner(null);
+        setAccount(null);
+        setIsConnected(false);
+      } else {
+        // User switched account in MetaMask — update state
+        const update = async () => {
+          try {
+            const p = new ethers.BrowserProvider(window.ethereum);
+            const s = await p.getSigner();
+            setProvider(p);
+            setSigner(s);
+            setAccount(accounts[0]);
             setIsConnected(true);
+          } catch (e) {
+            console.error("accountsChanged error:", e);
           }
-        } catch (error) {
-          console.error("Error checking connection:", error);
-        }
-      };
+        };
+        update();
+      }
+    };
 
-      checkConnection();
+    window.ethereum.on("accountsChanged", handleAccountsChanged);
+    window.ethereum.on("chainChanged", () => window.location.reload());
 
-      window.ethereum.on("accountsChanged", (accounts) => {
-        if (accounts.length === 0) {
-          disconnectWallet();
-        } else {
-          // Only auto-reconnect if user didn't explicitly disconnect
-          if (!wasExplicitlyDisconnected()) {
-            checkConnection();
-          }
-        }
-      });
-
-      window.ethereum.on("chainChanged", () => {
-        window.location.reload();
-      });
-    }
+    return () => {
+      window.ethereum.removeListener("accountsChanged", handleAccountsChanged);
+    };
   }, []);
 
   return {
@@ -179,4 +159,3 @@ export const useWeb3 = () => {
     disconnectWallet,
   };
 };
-
