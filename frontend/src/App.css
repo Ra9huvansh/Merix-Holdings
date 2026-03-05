@@ -1385,24 +1385,70 @@
   opacity: 1;
 }
 
-.nav-button.nav-button-danger.active {
-  background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
-  box-shadow: 0 0 16px rgba(239, 68, 68, 0.35);
+/* Liquidate — slow danger pulse */
+@keyframes liquidate-pulse {
+  0%, 100% {
+    box-shadow: 0 0 6px rgba(239, 68, 68, 0.15), 0 0 0px rgba(239, 68, 68, 0);
+    border-color: rgba(239, 68, 68, 0.2);
+    color: rgba(255, 255, 255, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 18px rgba(239, 68, 68, 0.45), 0 0 36px rgba(239, 68, 68, 0.12);
+    border-color: rgba(239, 68, 68, 0.55);
+    color: #fca5a5;
+  }
 }
 
-.nav-button.nav-button-danger:hover {
+.nav-button.nav-button-danger:not(.active) {
+  animation: liquidate-pulse 2.8s ease-in-out infinite;
+}
+
+.nav-button.nav-button-danger:hover:not(.active) {
+  animation: none;
   color: #fca5a5;
-  border-color: rgba(239, 68, 68, 0.3);
+  border-color: rgba(239, 68, 68, 0.5);
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.nav-button.nav-button-danger.active {
+  animation: none;
+  background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
+  box-shadow: 0 0 18px rgba(239, 68, 68, 0.45);
+  border-color: transparent;
+}
+
+/* Yield — slow prosperous breathe */
+@keyframes yield-breathe {
+  0%, 100% {
+    box-shadow: 0 0 6px rgba(16, 185, 129, 0.15), 0 0 0px rgba(16, 185, 129, 0);
+    border-color: rgba(16, 185, 129, 0.2);
+    color: rgba(255, 255, 255, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 18px rgba(16, 185, 129, 0.4), 0 0 36px rgba(16, 185, 129, 0.1);
+    border-color: rgba(16, 185, 129, 0.5);
+    color: #6ee7b7;
+  }
+}
+
+.nav-button.nav-button-yield:not(.active) {
+  animation: yield-breathe 3.2s ease-in-out infinite;
+}
+
+.nav-button.nav-button-yield:hover:not(.active) {
+  animation: none;
+  color: #6ee7b7;
+  border-color: rgba(16, 185, 129, 0.5);
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.35);
+  background: rgba(16, 185, 129, 0.1);
 }
 
 .nav-button.nav-button-yield.active {
+  animation: none;
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  box-shadow: 0 0 16px rgba(16, 185, 129, 0.35);
-}
-
-.nav-button.nav-button-yield:hover {
-  color: #6ee7b7;
-  border-color: rgba(16, 185, 129, 0.3);
+  box-shadow: 0 0 18px rgba(16, 185, 129, 0.45);
+  border-color: transparent;
 }
 
 /* Main Content */
