@@ -250,6 +250,42 @@ export const useDSCEngine = () => {
     }
   };
 
+  const fetchAtRiskPositions = useCallback(async () => {
+    if (!signer) return [];
+    try {
+      const engine = getEngineContract();
+      if (!engine) return [];
+
+      // Collect all unique depositors via CollateralDeposited events
+      const filter = engine.filters.CollateralDeposited();
+      const events = await engine.queryFilter(filter, 0, "latest");
+      const uniqueUsers = [...new Set(events.map((e) => e.args.user))];
+
+      const MIN_HEALTH_FACTOR = ethers.parseUnits("1", 18);
+      const atRisk = [];
+
+      for (const userAddr of uniqueUsers) {
+        const [info, healthFactor] = await Promise.all([
+          engine.getAccountInformation(userAddr),
+          engine.getHealthFactor(userAddr),
+        ]);
+        if (BigInt(info.totalDscMinted) > 0n && BigInt(healthFactor) < MIN_HEALTH_FACTOR) {
+          atRisk.push({
+            address: userAddr,
+            totalDscMinted: info.totalDscMinted.toString(),
+            collateralValueInUsd: info.collateralValueInUsd.toString(),
+            healthFactor: healthFactor.toString(),
+          });
+        }
+      }
+
+      return atRisk;
+    } catch (error) {
+      console.error("Error fetching at-risk positions:", error);
+      return [];
+    }
+  }, [signer, getEngineContract]);
+
   const liquidate = async (collateralAddress, userAddress, debtToCover) => {
     if (!signer) throw new Error("Not connected");
     setLoading(true);
@@ -287,6 +323,7 @@ export const useDSCEngine = () => {
     redeemCollateralForDsc,
     liquidate,
     fetchAccountInfo,
+    fetchAtRiskPositions,
   };
 };
 

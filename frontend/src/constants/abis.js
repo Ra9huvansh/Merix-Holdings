@@ -1,6 +1,27 @@
 // DSCEngine ABI
 export const DSC_ENGINE_ABI = [
   {
+    "anonymous": false,
+    "inputs": [
+      { "indexed": true, "internalType": "address", "name": "user", "type": "address" },
+      { "indexed": true, "internalType": "address", "name": "token", "type": "address" },
+      { "indexed": true, "internalType": "uint256", "name": "amount", "type": "uint256" }
+    ],
+    "name": "CollateralDeposited",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      { "indexed": true, "internalType": "address", "name": "redeemedFrom", "type": "address" },
+      { "indexed": true, "internalType": "address", "name": "redeemedTo", "type": "address" },
+      { "indexed": true, "internalType": "address", "name": "token", "type": "address" },
+      { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" }
+    ],
+    "name": "CollateralRedeemed",
+    "type": "event"
+  },
+  {
     "inputs": [
       { "internalType": "address", "name": "tokenCollateralAddress", "type": "address" },
       { "internalType": "uint256", "name": "amountCollateral", "type": "uint256" }

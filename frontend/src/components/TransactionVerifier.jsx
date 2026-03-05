@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ethers } from "ethers";
 import { useWeb3 } from "../hooks/useWeb3";
+import { DSC_ENGINE_ABI, ERC20_ABI } from "../constants/abis";
 
 const TransactionVerifier = () => {
   const { provider } = useWeb3();
@@ -9,6 +10,7 @@ const TransactionVerifier = () => {
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
   const [functionSelector, setFunctionSelector] = useState(null);
+  const [resolvedSignature, setResolvedSignature] = useState(null);
 
   // Extract function selector from calldata (first 4 bytes)
   const extractFunctionSelector = (calldata) => {
@@ -45,64 +47,127 @@ const TransactionVerifier = () => {
     }
   };
 
-  // Analyze function selector with LLM
-  const analyzeWithLLM = async (selector) => {
-    const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
-    
-    if (!apiKey) {
-      // Fallback: Use a simple heuristic analysis
-      return analyzeHeuristically(selector);
-    }
+  const SYSTEM_PROMPT = `You are a blockchain security expert analyzing Ethereum transaction calldata.
 
-    try {
-      const response = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({
-          model: "gpt-4o-mini",
-          messages: [
-            {
-              role: "system",
-              content: `You are a blockchain security expert. Analyze Ethereum function selectors (first 4 bytes of calldata) to determine if a transaction could be malicious.
+You will be given:
+- The function selector (first 4 bytes)
+- The resolved function signature (if known)
+- The full calldata
 
-Consider:
-- Common attack patterns (reentrancy, unauthorized transfers, approval exploits)
-- Suspicious function signatures (transfer, approve, delegatecall, selfdestruct)
-- High-risk operations (token transfers, contract calls, state changes)
+Your job is to assess whether this transaction is safe to sign. Be accurate — do NOT flag everything as high risk. Common, well-known operations like ERC20 transfers, approvals to known protocols, and standard DeFi interactions are generally low-to-medium risk depending on context.
 
-Respond in JSON format:
+Only flag as "high" or "critical" if there are genuine red flags such as:
+- delegatecall or selfdestruct patterns
+- Unusual or obfuscated calldata
+- Ownership transfers or upgrade calls
+- Unlimited approvals to unknown contracts
+
+You MUST respond with ONLY a valid JSON object, no other text:
 {
   "risk": "low" | "medium" | "high" | "critical",
   "safe": true | false,
-  "explanation": "brief explanation",
+  "functionName": "resolved function name or unknown",
+  "explanation": "brief explanation of what this transaction does",
   "recommendation": "what the user should do"
-}`
-            },
-            {
-              role: "user",
-              content: `Analyze this function selector: ${selector}\n\nIs this transaction safe to sign?`
-            }
-          ],
-          temperature: 0.3,
-          response_format: { type: "json_object" }
-        }),
-      });
+}`;
 
-      if (!response.ok) {
-        throw new Error(`API error: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      const analysis = JSON.parse(data.choices[0].message.content);
-      return analysis;
-    } catch (err) {
-      console.error("LLM analysis failed:", err);
-      // Fallback to heuristic
-      return analyzeHeuristically(selector);
+  const lookupInLocalABI = (selector) => {
+    const entries = [...DSC_ENGINE_ABI, ...ERC20_ABI].filter(e => e.type === "function");
+    for (const entry of entries) {
+      const paramTypes = entry.inputs.map(i => i.type).join(",");
+      const sig = `${entry.name}(${paramTypes})`;
+      const computed = ethers.id(sig).slice(0, 10);
+      if (computed.toLowerCase() === selector.toLowerCase()) return sig;
     }
+    return null;
+  };
+
+  const lookupFunctionSignature = async (selector) => {
+    // Check local ABI first (covers all DSCEngine + ERC20 functions)
+    const localMatch = lookupInLocalABI(selector);
+    if (localMatch) return localMatch;
+
+    // Fall back to 4byte.directory for everything else
+    try {
+      const res = await fetch(`https://www.4byte.directory/api/v1/signatures/?hex_signature=${selector}`);
+      if (!res.ok) return null;
+      const data = await res.json();
+      if (data.results && data.results.length > 0) {
+        return data.results[0].text_signature;
+      }
+    } catch {
+      // silently ignore
+    }
+    return null;
+  };
+
+  const callLLM = async (url, model, headers, selector, signature, calldata) => {
+    const userMessage = [
+      `Function selector: ${selector}`,
+      `Resolved signature: ${signature || "unknown"}`,
+      `Full calldata: ${calldata}`,
+      ``,
+      `Is this transaction safe to sign?`,
+    ].join("\n");
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...headers },
+      body: JSON.stringify({
+        model,
+        messages: [
+          { role: "system", content: SYSTEM_PROMPT },
+          { role: "user", content: userMessage },
+        ],
+        temperature: 0.2,
+      }),
+    });
+
+    if (!response.ok) throw new Error(`API error: ${response.statusText}`);
+
+    const data = await response.json();
+    const content = data.choices[0].message.content;
+    const cleaned = content.replace(/```json\n?|\n?```/g, "").trim();
+    return JSON.parse(cleaned);
+  };
+
+  // Analyze function selector with LLM
+  const analyzeWithLLM = async (selector, calldata, signature) => {
+
+    // 1. Try local Ollama first
+    const ollamaModel = import.meta.env.VITE_OLLAMA_MODEL || "qwen2.5:14b";
+    try {
+      return await callLLM(
+        "http://localhost:11434/v1/chat/completions",
+        ollamaModel,
+        {},
+        selector,
+        signature,
+        calldata
+      );
+    } catch (err) {
+      console.warn("Ollama unavailable:", err.message);
+    }
+
+    // 2. Fall back to Groq if key is configured
+    const groqKey = import.meta.env.VITE_GROQ_API_KEY;
+    if (groqKey) {
+      try {
+        return await callLLM(
+          "https://api.groq.com/openai/v1/chat/completions",
+          "llama-3.3-70b-versatile",
+          { Authorization: `Bearer ${groqKey}` },
+          selector,
+          signature,
+          calldata
+        );
+      } catch (err) {
+        console.warn("Groq fallback failed:", err.message);
+      }
+    }
+
+    // 3. Last resort: heuristic
+    return analyzeHeuristically(selector);
   };
 
   // Heuristic analysis fallback
@@ -145,6 +210,7 @@ Respond in JSON format:
     setError(null);
     setResult(null);
     setFunctionSelector(null);
+    setResolvedSignature(null);
 
     try {
       let calldata = input.trim();
@@ -160,8 +226,12 @@ Respond in JSON format:
       selector = extractFunctionSelector(calldata);
       setFunctionSelector(selector);
 
-      // Analyze with LLM
-      const analysis = await analyzeWithLLM(selector);
+      // Resolve signature immediately — shows up before LLM finishes
+      const sig = await lookupFunctionSignature(selector);
+      setResolvedSignature(sig || "Unknown (not in 4byte.directory)");
+
+      // Analyze with LLM (pass already-resolved signature to avoid double lookup)
+      const analysis = await analyzeWithLLM(selector, calldata, sig);
       setResult(analysis);
     } catch (err) {
       setError(err.message || "Failed to verify transaction");
@@ -285,6 +355,17 @@ Respond in JSON format:
             <div className="verifier-selector-value">
               <code>{functionSelector}</code>
             </div>
+            {resolvedSignature && (
+              <div style={{ marginTop: "0.5rem", fontSize: "0.85rem" }}>
+                <span style={{ color: "#6b7280" }}>Function: </span>
+                <span style={{
+                  color: resolvedSignature.startsWith("Unknown") ? "#f59e0b" : "#a78bfa",
+                  fontFamily: "monospace",
+                }}>
+                  {resolvedSignature}
+                </span>
+              </div>
+            )}
           </div>
         )}
 
@@ -377,7 +458,7 @@ Respond in JSON format:
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
               <path d="M12 16V12M12 8H12.01M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
-            <span>Add <code>VITE_OPENAI_API_KEY</code> to your .env for enhanced AI-powered analysis</span>
+            <span>Uses local Ollama when available. On Vercel, add <code>VITE_GROQ_API_KEY</code> as an environment variable for cloud AI fallback.</span>
           </div>
         </div>
       </div>
