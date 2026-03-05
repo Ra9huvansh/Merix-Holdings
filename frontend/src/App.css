@@ -932,8 +932,6 @@
 
 /* Yield nav button accent */
 .yield-nav-button.active {
-  background: rgba(167, 139, 250, 0.15) !important;
-  color: #a78bfa !important;
   border-color: rgba(167, 139, 250, 0.3) !important;
 }
 
@@ -1327,130 +1325,84 @@
   flex-shrink: 0;
 }
 
-.verify-tx-nav-button::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(192, 192, 192, 0.2), transparent);
-  transition: left 0.6s;
-  border-radius: 12px;
-}
-
-.verify-tx-nav-button:hover::before {
-  left: 100%;
-}
-
-.verify-tx-nav-button span {
-  position: relative;
-  z-index: 1;
-  transition: color 0.3s ease;
-}
-
-.verify-tx-nav-button svg {
-  position: relative;
-  z-index: 1;
-  flex-shrink: 0;
-  transition: transform 0.3s ease;
-}
-
 .verify-tx-nav-button:hover {
-  color: white;
-  background: linear-gradient(135deg, rgba(192, 192, 192, 0.18) 0%, rgba(255, 255, 255, 0.1) 100%);
-  border-color: rgba(192, 192, 192, 0.5);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 24px rgba(192, 192, 192, 0.2), 0 0 40px rgba(192, 192, 192, 0.1);
-}
-
-.verify-tx-nav-button:hover svg {
-  transform: scale(1.1) rotate(5deg);
+  color: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
 }
 
 .verify-tx-nav-button.active {
   color: white;
-  background: linear-gradient(135deg, rgba(192, 192, 192, 0.2) 0%, rgba(255, 255, 255, 0.12) 100%);
-  border-color: rgba(192, 192, 192, 0.6);
-  box-shadow: 0 0 0 2px rgba(192, 192, 192, 0.2), 0 6px 24px rgba(192, 192, 192, 0.25), 0 0 50px rgba(192, 192, 192, 0.15);
-}
-
-.verify-tx-nav-button.active svg {
-  animation: iconPulse 2s ease-in-out infinite;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-color: transparent;
+  box-shadow: 0 0 16px rgba(102, 126, 234, 0.4);
 }
 
 .nav-button {
-  background: none;
-  border: none;
-  padding: 0 20px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  padding: 0 14px;
+  margin: 0 3px;
   cursor: pointer;
-  font-size: 0.9375rem;
-  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.8125rem;
+  color: rgba(255, 255, 255, 0.45);
   font-weight: 500;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  letter-spacing: 0.01em;
+  transition: all 0.2s ease;
   white-space: nowrap;
-  position: relative;
-  height: 100%;
+  height: 34px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 0;
+  gap: 6px;
+  border-radius: 20px;
 }
 
-.nav-button span {
-  position: relative;
-  z-index: 1;
-  transition: color 0.3s ease;
-}
-
-.nav-button::before {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  width: 0;
-  height: 3px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  transform: translateX(-50%);
-  border-radius: 3px 3px 0 0;
-}
-
-.nav-button::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 0;
-  height: 0;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 10px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  transform: translate(-50%, -50%);
-  z-index: 0;
+.nav-button svg {
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+  flex-shrink: 0;
 }
 
 .nav-button:hover {
-  color: rgba(255, 255, 255, 0.9);
+  color: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
 }
 
-.nav-button:hover::after {
-  width: calc(100% - 8px);
-  height: calc(100% - 8px);
+.nav-button:hover svg {
+  opacity: 1;
 }
 
 .nav-button.active {
-  color: white;
+  color: #fff;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-color: transparent;
+  box-shadow: 0 0 16px rgba(102, 126, 234, 0.4);
 }
 
-.nav-button.active::before {
-  width: 70%;
+.nav-button.active svg {
+  opacity: 1;
 }
 
-.nav-button.active::after {
-  width: calc(100% - 8px);
-  height: calc(100% - 8px);
-  background: rgba(255, 255, 255, 0.08);
+.nav-button.nav-button-danger.active {
+  background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
+  box-shadow: 0 0 16px rgba(239, 68, 68, 0.35);
+}
+
+.nav-button.nav-button-danger:hover {
+  color: #fca5a5;
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.nav-button.nav-button-yield.active {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  box-shadow: 0 0 16px rgba(16, 185, 129, 0.35);
+}
+
+.nav-button.nav-button-yield:hover {
+  color: #6ee7b7;
+  border-color: rgba(16, 185, 129, 0.3);
 }
 
 /* Main Content */

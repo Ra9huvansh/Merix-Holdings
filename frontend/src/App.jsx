@@ -43,6 +43,17 @@ function App() {
               </svg>
             </div>
             <h1 className="brand-name">Merix Holdings</h1>
+            <button
+              className="admin-header-btn"
+              onClick={() => setAdminOpen(true)}
+              title="Admin Panel"
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+                <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"
+                  fill="currentColor" opacity="0.85"/>
+              </svg>
+              Admin
+            </button>
           </div>
           <div className="header-right">
             <div className="network-badge" style={{ backgroundColor: getNetworkColor(CHAIN_ID) }}>
@@ -55,17 +66,6 @@ function App() {
               <span className="health-label">Health</span>
               <span className="health-value">{accountInfo.healthFactor}</span>
             </div>
-            <button
-              className="admin-header-btn"
-              onClick={() => setAdminOpen(true)}
-              title="Admin Panel"
-            >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
-                <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"
-                  fill="currentColor" opacity="0.85"/>
-              </svg>
-              Admin
-            </button>
             <button
               className="disconnect-button"
               onClick={disconnectWallet}
@@ -82,57 +82,37 @@ function App() {
 
       <nav className="nav">
         <div className="nav-container">
-          <button 
-            className={activeTab === "dashboard" ? "nav-button active" : "nav-button"}
-            onClick={() => setActiveTab("dashboard")}
-          >
+          <button className={`nav-button ${activeTab === "dashboard" ? "active" : ""}`} onClick={() => setActiveTab("dashboard")}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="7" rx="1.5" fill="currentColor"/><rect x="14" y="3" width="7" height="7" rx="1.5" fill="currentColor" opacity="0.7"/><rect x="3" y="14" width="7" height="7" rx="1.5" fill="currentColor" opacity="0.7"/><rect x="14" y="14" width="7" height="7" rx="1.5" fill="currentColor" opacity="0.5"/></svg>
             <span>Dashboard</span>
           </button>
-          <button 
-            className={activeTab === "deposit" ? "nav-button active" : "nav-button"}
-            onClick={() => setActiveTab("deposit")}
-          >
+          <button className={`nav-button ${activeTab === "deposit" ? "active" : ""}`} onClick={() => setActiveTab("deposit")}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 3v12M7 10l5 5 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M5 19h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
             <span>Deposit</span>
           </button>
-          <button 
-            className={activeTab === "mint" ? "nav-button active" : "nav-button"}
-            onClick={() => setActiveTab("mint")}
-          >
+          <button className={`nav-button ${activeTab === "mint" ? "active" : ""}`} onClick={() => setActiveTab("mint")}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2"/><path d="M12 7v5l3 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><path d="M9 12h6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
             <span>Mint DSC</span>
           </button>
-          <button 
-            className={activeTab === "redeem" ? "nav-button active" : "nav-button"}
-            onClick={() => setActiveTab("redeem")}
-          >
+          <button className={`nav-button ${activeTab === "redeem" ? "active" : ""}`} onClick={() => setActiveTab("redeem")}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 21V9M17 14l-5-5-5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M5 5h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
             <span>Redeem</span>
           </button>
-          <button 
-            className={activeTab === "burn" ? "nav-button active" : "nav-button"}
-            onClick={() => setActiveTab("burn")}
-          >
+          <button className={`nav-button ${activeTab === "burn" ? "active" : ""}`} onClick={() => setActiveTab("burn")}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 2c0 6-6 8-6 13a6 6 0 0 0 12 0c0-5-6-7-6-13z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round"/><path d="M12 12c0 3-2 4-2 6a2 2 0 0 0 4 0c0-2-2-3-2-6z" fill="currentColor" opacity="0.5"/></svg>
             <span>Burn DSC</span>
           </button>
-          <button
-            className={activeTab === "liquidate" ? "nav-button active" : "nav-button"}
-            onClick={() => setActiveTab("liquidate")}
-          >
+          <button className={`nav-button nav-button-danger ${activeTab === "liquidate" ? "active" : ""}`} onClick={() => setActiveTab("liquidate")}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
             <span>Liquidate</span>
           </button>
-          <button
-            className={activeTab === "yield" ? "nav-button active yield-nav-button" : "nav-button yield-nav-button"}
-            onClick={() => setActiveTab("yield")}
-          >
+          <button className={`nav-button nav-button-yield ${activeTab === "yield" ? "active" : ""}`} onClick={() => setActiveTab("yield")}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M3 17l4-4 4 4 4-6 4 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M21 7l-4 1 1-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
             <span>Yield</span>
           </button>
           <div className="nav-divider"></div>
-          <button 
-            className={`verify-tx-nav-button ${activeTab === "verify" ? "active" : ""}`}
-            onClick={() => setActiveTab("verify")}
-            title="Transaction Security Verifier"
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-              <path d="M9 12L11 14L15 10M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
+          <button className={`verify-tx-nav-button ${activeTab === "verify" ? "active" : ""}`} onClick={() => setActiveTab("verify")} title="Transaction Security Verifier">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M9 12L11 14L15 10M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
             <span>Verify TX</span>
           </button>
         </div>
