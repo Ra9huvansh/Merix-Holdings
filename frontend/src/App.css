@@ -300,12 +300,8 @@
 /* Reserve Cards */
 .admin-reserve-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: 12px;
-}
-
-@media (max-width: 520px) {
-  .admin-reserve-grid { grid-template-columns: 1fr; }
 }
 
 .admin-reserve-card {
