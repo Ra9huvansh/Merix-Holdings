@@ -436,21 +436,21 @@ You MUST respond with ONLY a valid JSON object, no other text:
               <div className="verifier-info-number">01</div>
               <div className="verifier-info-content">
                 <strong>Decode the Transaction</strong>
-                <p>Extracts the 4-byte function selector and resolves it to a human-readable name — so you know exactly what function is being called before signing</p>
+                <p>Extracts the 4-byte function selector and resolves it to a human-readable name so you know exactly what function is being called before signing</p>
               </div>
             </div>
             <div className="verifier-info-item">
               <div className="verifier-info-number">02</div>
               <div className="verifier-info-content">
                 <strong>AI Reads the Calldata</strong>
-                <p>Runs Ollama locally first, falls back to Groq, then heuristics — looks for unlimited approvals, suspicious recipients, proxy hijacks, and known attack patterns</p>
+                <p>Tries Ollama locally first, then Groq, then heuristics. Looks for unlimited approvals, suspicious recipients, proxy hijacks and known exploit patterns</p>
               </div>
             </div>
             <div className="verifier-info-item">
               <div className="verifier-info-number">03</div>
               <div className="verifier-info-content">
                 <strong>Flags What Matters</strong>
-                <p>Returns a clear risk rating — Safe, Low, Medium, High, or Critical — with a plain-English explanation of what was found and whether you should sign</p>
+                <p>Returns a risk rating from Safe to Critical with a plain-English explanation of what was found and whether you should sign</p>
               </div>
             </div>
           </div>
