@@ -1,440 +1,383 @@
-# 💎 Merix Holdings – Decentralized Stablecoin Platform
-
 <div align="center">
 
-![Merix Holdings](https://img.shields.io/badge/Merix%20Holdings-Decentralized%20Stablecoin-667eea?style=for-the-badge&logo=ethereum)
-![Solidity](https://img.shields.io/badge/Solidity-0.8.19-363636?style=for-the-badge&logo=solidity)
-![React](https://img.shields.io/badge/React-18+-61dafb?style=for-the-badge&logo=react)
-![Foundry](https://img.shields.io/badge/Foundry-Latest-000000?style=for-the-badge)
+<img src="docs/assets/landing.png" alt="Merix Holdings Landing Page" width="100%" />
 
-**A decentralized, pegged, over-collateralized stablecoin protocol built on Ethereum with a stunning Apple-inspired UI**
+<br/><br/>
 
-[Features](#-features) • [Quick Start](#-quick-start) • [Frontend](#-frontend-features) • [Smart Contracts](#-smart-contracts) • [Deployment](#-deployment)
+![Solidity](https://img.shields.io/badge/Solidity-0.8.18-363636?style=flat-square&logo=solidity)
+![Foundry](https://img.shields.io/badge/Foundry-Framework-orange?style=flat-square)
+![React](https://img.shields.io/badge/React-18-61dafb?style=flat-square&logo=react)
+![Ethers.js](https://img.shields.io/badge/Ethers.js-v6-2535a0?style=flat-square)
+![Network](https://img.shields.io/badge/Network-Sepolia-purple?style=flat-square)
+![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)
+
+### A decentralized, over-collateralized stablecoin protocol built on Ethereum.
+Mint DSC pegged to $1.00 by locking WETH or WBTC — fully on-chain, governed by math, not humans.
+
+**[Live on Sepolia](#deployed-contracts) · [GitHub](https://github.com/Ra9huvansh/Merix-Holdings) · [Twitter](https://x.com/Raghuvansh95)**
 
 </div>
 
 ---
 
-## 🌟 Overview
+## What is Merix Holdings?
 
-**Merix Holdings** is a **collateral-backed, over-collateralized stablecoin** protocol that lets you:
+Merix Holdings is a **collateral-backed stablecoin protocol** inspired by MakerDAO's DSS system, with zero governance and zero fees. Users deposit blue-chip crypto assets (WETH / WBTC) as collateral and mint **DSC** — a token designed to maintain a $1.00 peg at all times.
 
-- 💰 **Deposit** blue-chip crypto assets (WETH / WBTC) as collateral
-- 🪙 **Mint** a decentralized stablecoin (DSC) pegged to $1.00
-- 🔄 **Redeem / Burn** to unlock your collateral
-- ⚡ **Liquidate** risky positions – fully on-chain, enforced by smart contracts
-- 🔒 **Verify Transactions** with AI-powered security analysis
+The protocol is entirely enforced by smart contracts. No admin can mint DSC out of thin air. No multisig can freeze your collateral. Stability is maintained through over-collateralization, real-time Chainlink price feeds, and a permissionless liquidation mechanism.
 
-Built with **Foundry** for smart contracts and a **modern React + Vite frontend** featuring an elegant black & silver "timepiece" design inspired by luxury watchmaking.
+On top of the core protocol sits a **Yield Aggregator** — an ERC4626-style vault that lets users put their minted DSC to work across multiple strategies without touching their collateral position or health factor.
 
 ---
 
-## ✨ Features
+## Screenshots
 
-### 🏗️ Smart Contract Features
-
-- ✅ **Over-Collateralization** – Your collateral value must exceed your DSC debt
-- ✅ **Health Factor System** – Real-time position safety monitoring
-- ✅ **Chainlink Price Feeds** – Decentralized, reliable price oracles
-- ✅ **Liquidation Mechanism** – Automated protection against undercollateralization
-- ✅ **Multi-Collateral Support** – WETH and WBTC support
-- ✅ **Security First** – Reentrancy guards, access controls, and comprehensive checks
-
-### 🎨 Frontend Features
-
-- 🖤 **Premium Black & Silver Theme** – Elegant, timepiece-inspired design
-- 🌌 **Animated Landing Page** – Orbital logo with mesmerizing effects
-- 📊 **Live Market Ticker** – Real-time crypto prices from CoinGecko
-- 💫 **Silver Meteor Effects** – Subtle background animations
-- 📱 **Fully Responsive** – Beautiful on all devices
-- 🔐 **Transaction Verifier** – AI-powered security analysis for MetaMask transactions
-
----
-
-## 🎯 Core Concepts
-
-### 💵 DSC (Decentralized StableCoin)
-An ERC20 token designed to track **$1.00**, backed by more value in collateral than is minted. Think of it as a crypto-backed dollar that you can mint by locking up valuable assets.
-
-### 🏦 Collateral (WETH / WBTC)
-You lock WETH or WBTC into the `DSCEngine` contract. This collateral is valued in real-time via **Chainlink price feeds**, ensuring accurate USD valuations.
-
-### ❤️ Health Factor
-A critical metric that tells you how safe your position is:
-- **> 1.0** → ✅ Safe position
-- **≤ 1.0** → ⚠️ Can be liquidated
-
-**Formula:** `(Total Collateral Value × Liquidation Threshold) / Total DSC Debt`
-
-### 🪙 Minting DSC
-You can mint DSC tokens against your collateral, but only if your **health factor stays above the minimum threshold**. The more collateral you have, the more DSC you can mint safely.
-
-### 🔄 Redeeming / Burning
-- **Redeem Collateral**: Return (burn) DSC → receive your WETH / WBTC back
-- **Burn DSC**: Reduces your debt and improves your health factor
-
-### ⚡ Liquidation
-If someone's health factor drops too low, another user can **liquidate** their position, repaying their DSC debt and taking a portion of their collateral with a bonus.
+<table>
+  <tr>
+    <td align="center"><b>Dashboard</b></td>
+    <td align="center"><b>Yield Aggregator Terminal</b></td>
+  </tr>
+  <tr>
+    <td><img src="docs/assets/dashboard.png" alt="Dashboard" width="100%"/></td>
+    <td><img src="docs/assets/yield.png" alt="Yield Terminal" width="100%"/></td>
+  </tr>
+  <tr>
+    <td align="center" colspan="2"><b>AI Transaction Security Verifier</b></td>
+  </tr>
+  <tr>
+    <td colspan="2" align="center"><img src="docs/assets/tx-verifier.png" alt="TX Verifier" width="80%"/></td>
+  </tr>
+</table>
 
 ---
 
-## 📁 Project Structure
+## Protocol Architecture
 
 ```
-Merix Holdings/
-├── 📄 src/                          # Smart Contracts
-│   ├── DecentralizedStableCoin.sol  # ERC20 stablecoin implementation
-│   ├── DSCEngine.sol                # Core protocol logic
-│   └── libraries/
-│       └── OracleLib.sol            # Chainlink price feed helpers
+┌─────────────────────────────────────────────────────────────────┐
+│                        User (MetaMask)                          │
+└──────────────────────────────┬──────────────────────────────────┘
+                               │
+              ┌────────────────▼────────────────┐
+              │           DSCEngine             │
+              │   ┌──────────────────────────┐  │
+              │   │  depositCollateral()     │  │
+              │   │  mintDsc()               │  │
+              │   │  redeemCollateral()      │  │
+              │   │  burnDsc()               │  │
+              │   │  liquidate()             │  │
+              │   │  getHealthFactor()       │  │
+              │   └──────────────────────────┘  │
+              │                                 │
+              │  ┌─────────┐   ┌──────────────┐ │
+              │  │ WETH    │   │ WBTC         │ │
+              │  │Collateral│  │Collateral    │ │
+              │  └────┬────┘   └──────┬───────┘ │
+              └───────┼───────────────┼─────────┘
+                      │               │
+              ┌───────▼───────────────▼──────────┐
+              │      Chainlink Price Feeds       │
+              │   ETH/USD          BTC/USD       │
+              └──────────────────────────────────┘
+                               │
+              ┌────────────────▼────────────────┐
+              │    DecentralizedStableCoin (DSC)│
+              │      ERC20 · Burnable · Ownable │
+              └────────────────┬────────────────┘
+                               │
+              ┌────────────────▼────────────────┐
+              │         YieldAggregator         │
+              │   ERC4626-style vault (yDSC)    │
+              │   XAU · XAG · Aave · Compound   │
+              └─────────────────────────────────┘
+```
+
+---
+
+## Smart Contracts
+
+### `DecentralizedStableCoin.sol`
+
+ERC20 token that represents the stablecoin (DSC). Fully owned and controlled by `DSCEngine` — only the engine can mint or burn. Users can burn their own DSC to reduce debt.
+
+### `DSCEngine.sol`
+
+The core of the protocol. Handles all collateral management and DSC lifecycle.
+
+| Function | Description |
+|---|---|
+| `depositCollateral(token, amount)` | Lock WETH or WBTC into the protocol |
+| `mintDsc(amount)` | Mint DSC against deposited collateral |
+| `redeemCollateral(token, amount)` | Withdraw collateral (health factor check enforced) |
+| `burnDsc(amount)` | Burn DSC to reduce debt and improve health factor |
+| `liquidate(token, user, debtToCover)` | Liquidate an undercollateralized position and earn a 10% bonus |
+| `getHealthFactor(user)` | Returns the user's current health factor (1e18 = 1.0) |
+| `getAccountCollateralValue(user)` | Total collateral value in USD |
+| `getAccountInformation(user)` | Returns total DSC minted + collateral value |
+
+**Security:** `ReentrancyGuard` on all state-changing functions, health factor checked before every mint/redeem, strict allowlist for collateral tokens, Chainlink staleness validation via `OracleLib`.
+
+### `OracleLib.sol`
+
+Wrapper around Chainlink `AggregatorV3Interface` that adds staleness checks. If a price feed hasn't updated within the timeout window, the entire protocol pauses to prevent stale-price exploits.
+
+### `YieldAggregator.sol`
+
+An ERC4626-style vault that accepts DSC and issues `yDSC` shares. Deposits are allocated across simulated strategies (XAU, XAG, Aave, Compound). Yield accrues via `_harvestAll()` which grows `totalAssets` on every interaction. Operates completely independently from `DSCEngine` — your health factor is never affected.
+
+### `RedemptionContract.sol`
+
+Utility contract for converting yDSC vault proceeds back into collateral. Allows users to redeem DSC profits directly for WETH/WBTC.
+
+---
+
+## Project Structure
+
+```
+Merix-Holdings/
+├── src/
+│   ├── DecentralizedStableCoin.sol   # ERC20 stablecoin
+│   ├── DSCEngine.sol                  # Core protocol logic
+│   ├── libraries/
+│   │   └── OracleLib.sol             # Chainlink staleness checks
+│   └── yield/
+│       ├── YieldAggregator.sol       # ERC4626 yield vault
+│       └── RedemptionContract.sol    # DSC → collateral redemption
 │
-├── 📜 script/                       # Deployment Scripts
-│   ├── DeployDSC.s.sol              # Basic deployment
-│   ├── HelperConfig.s.sol            # Network configurations
-│   └── DeployAndUpdateFrontend.s.sol # Deployment + frontend config
+├── script/
+│   ├── DeployDSC.s.sol               # Basic deployment
+│   ├── HelperConfig.s.sol            # Network configurations & mock feeds
+│   └── DeployAndUpdateFrontend.s.sol # Full deploy + env output
 │
-├── 🎨 frontend/                     # React + Vite Application
+├── test/
+│   ├── unit/                         # Unit tests
+│   └── fuzz/                         # Invariant & fuzz tests
+│
+├── frontend/
 │   ├── src/
-│   │   ├── components/             # UI Components
-│   │   ├── hooks/                   # Custom React hooks
-│   │   ├── constants/                # ABIs & addresses
-│   │   └── utils/                   # Helper functions
+│   │   ├── components/
+│   │   │   ├── Dashboard.jsx
+│   │   │   ├── DepositCollateral.jsx
+│   │   │   ├── MintDSC.jsx
+│   │   │   ├── RedeemCollateral.jsx
+│   │   │   ├── BurnDSC.jsx
+│   │   │   ├── Liquidation.jsx
+│   │   │   ├── YieldTerminal.jsx
+│   │   │   ├── TransactionVerifier.jsx
+│   │   │   ├── AdminPanel.jsx
+│   │   │   └── LandingPage.jsx
+│   │   ├── hooks/
+│   │   │   ├── useWeb3.js
+│   │   │   ├── useDSCEngine.js
+│   │   │   └── useYieldAggregator.js
+│   │   ├── constants/
+│   │   │   ├── addresses.js
+│   │   │   └── abis.js
+│   │   └── utils/
+│   │       ├── formatting.js
+│   │       └── network.js
 │   └── package.json
 │
-└── 🧪 test/                         # Foundry Tests
-    ├── unit/                        # Unit tests
-    └── fuzz/                        # Fuzz & invariant tests
+├── docs/assets/                      # README screenshots
+├── broadcast/                        # Foundry deployment artifacts
+├── foundry.toml
+└── deploy-sepolia.sh
 ```
 
 ---
 
-## 🚀 Quick Start
+## Deployed Contracts
+
+**Network: Sepolia Testnet (Chain ID: 11155111)**
+
+| Contract | Address |
+|---|---|
+| DSCEngine | [`0xd1eb2Adaad17584e8162f4f89cDAf9D5Fe3e6417`](https://sepolia.etherscan.io/address/0xd1eb2Adaad17584e8162f4f89cDAf9D5Fe3e6417) |
+| DecentralizedStableCoin (DSC) | [`0x9AF0bEF4048DCb7a336741058A04B31A35D0A934`](https://sepolia.etherscan.io/address/0x9AF0bEF4048DCb7a336741058A04B31A35D0A934) |
+| WETH (Sepolia) | [`0xdd13E55209Fd76AfE204dBda4007C227904f0a81`](https://sepolia.etherscan.io/address/0xdd13E55209Fd76AfE204dBda4007C227904f0a81) |
+| WBTC (Sepolia) | [`0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063`](https://sepolia.etherscan.io/address/0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063) |
+
+---
+
+## Getting Started
 
 ### Prerequisites
 
-- 📦 **Node.js** (LTS version recommended)
-- 🔧 **Foundry** ([Installation Guide](https://book.getfoundry.sh/getting-started/installation))
-- 🦊 **MetaMask** browser extension
-- 🌐 **Sepolia RPC URL** (for testnet deployment) – Get one from [Infura](https://infura.io) or [Alchemy](https://alchemy.com)
+- [Foundry](https://book.getfoundry.sh/getting-started/installation) — smart contract toolchain
+- [Node.js](https://nodejs.org/) v18+ — frontend
+- [MetaMask](https://metamask.io/) — browser wallet, connected to Sepolia
 
-### 1️⃣ Install Foundry
+### Install Foundry
 
 ```bash
 curl -L https://foundry.paradigm.xyz | bash
 foundryup
 ```
 
-### 2️⃣ Install Dependencies
+### Clone & Install Dependencies
 
 ```bash
-# Install Foundry dependencies
+git clone https://github.com/Ra9huvansh/Merix-Holdings.git
+cd Merix-Holdings
+
+# Foundry dependencies
 forge install
 
-# Install frontend dependencies
-cd frontend
-npm install
-cd ..
+# Frontend dependencies
+cd frontend && npm install && cd ..
 ```
 
-### 3️⃣ Deploy Contracts
+### Environment Variables
 
-#### 🏠 Local Development (Anvil)
-
-```bash
-# Terminal 1: Start Anvil
-anvil
-
-# Terminal 2: Deploy contracts
-forge script script/DeployAndUpdateFrontend.s.sol:DeployAndUpdateFrontend \
-  --rpc-url http://localhost:8545 \
-  --broadcast
-```
-
-#### 🌐 Sepolia Testnet
-
-```bash
-# Set environment variables
-export PRIVATE_KEY=your_private_key_without_0x
-export SEPOLIA_RPC_URL=https://sepolia.infura.io/v3/YOUR_KEY
-export ETHERSCAN_API_KEY=your_etherscan_key
-
-# Deploy
-./deploy-sepolia.sh
-```
-
-The deployment script will print contract addresses in this format:
+Create `frontend/.env`:
 
 ```env
-VITE_DSC_ENGINE_ADDRESS=0x...
-VITE_DSC_TOKEN_ADDRESS=0x...
-VITE_WETH_ADDRESS=0x...
-VITE_WBTC_ADDRESS=0x...
+VITE_DSC_ENGINE_ADDRESS=0xd1eb2Adaad17584e8162f4f89cDAf9D5Fe3e6417
+VITE_DSC_TOKEN_ADDRESS=0x9AF0bEF4048DCb7a336741058A04B31A35D0A934
+VITE_WETH_ADDRESS=0xdd13E55209Fd76AfE204dBda4007C227904f0a81
+VITE_WBTC_ADDRESS=0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063
 VITE_CHAIN_ID=11155111
+
+# AI Transaction Verifier (optional — one or both)
+VITE_OLLAMA_MODEL=qwen2.5:14b         # Local Ollama model
+VITE_GROQ_API_KEY=your_groq_key       # Groq cloud fallback
 ```
 
-### 4️⃣ Configure Frontend
+> No spaces around `=`. Restart `npm run dev` after editing `.env`.
 
-Create `frontend/.env` with the addresses from deployment:
-
-```env
-VITE_DSC_ENGINE_ADDRESS=0xYourEngineAddress
-VITE_DSC_TOKEN_ADDRESS=0xYourDSCAddress
-VITE_WETH_ADDRESS=0xYourWETHAddress
-VITE_WBTC_ADDRESS=0xYourWBTCAddress
-VITE_CHAIN_ID=11155111
-VITE_OPENAI_API_KEY=your_openai_key_optional
-```
-
-**⚠️ Important:** No spaces around `=` signs!
-
-### 5️⃣ Run Frontend
+### Run the Frontend
 
 ```bash
 cd frontend
 npm run dev
 ```
 
-Open `http://localhost:5173` in your browser! 🎉
+Open [http://localhost:5173](http://localhost:5173), connect MetaMask on Sepolia, and you're in.
 
 ---
 
-## 🎨 Frontend Features
+## Local Development (Anvil)
 
-### 🏠 Landing Page (Disconnected State)
+```bash
+# Terminal 1 — start local chain
+anvil
 
-When you first visit Merix Holdings, you're greeted by a stunning landing page:
+# Terminal 2 — deploy contracts locally
+forge script script/DeployAndUpdateFrontend.s.sol:DeployAndUpdateFrontend \
+  --rpc-url http://localhost:8545 \
+  --broadcast
+```
 
-- ⚡ **Animated Hero** – Merix Holdings logo at the center of three orbiting rings, creating an "endless timepiece" effect
-- 📊 **Live Market Ticker** – Continuously scrolling prices for BTC, ETH, SOL, AVAX, LINK, and ARB with real-time data from CoinGecko
-- 💫 **Silver Meteor Effects** – Subtle animated streaks in key sections
-- 📖 **Protocol Overview** – Clear explanations of features, use cases, and how it works
-- 🔗 **Seamless Connection** – One-click wallet connection that instantly transitions to the dashboard
+The script prints all addresses in `.env` format — paste them into `frontend/.env`.
 
-### 💼 Dashboard (Connected State)
+### Run Tests
 
-Once connected, you get access to a comprehensive dashboard:
+```bash
+# All tests
+forge test
 
-#### 📊 Account Overview
-- **Health Factor** – Color-coded indicator (green = safe, red = risky)
-- **Total Collateral Value** – USD value of all deposited collateral
-- **DSC Minted** – Your current stablecoin debt
+# With verbosity
+forge test -vvv
 
-#### 💰 Collateral Positions
-For each token (WETH / WBTC):
-- Deposited amount
-- Wallet balance
-- Token symbol & address
-
-#### 🎯 Actions Available
-- **Deposit** – Lock WETH or WBTC as collateral
-- **Mint DSC** – Create stablecoins against your collateral
-- **Redeem** – Withdraw collateral by burning DSC
-- **Burn DSC** – Reduce debt to improve health factor
-- **Liquidate** – Close undercollateralized positions (with bonus!)
-
-### 🔒 Transaction Verifier (NEW! 🎉)
-
-A **premium security feature** that analyzes MetaMask transactions before you sign them:
-
-- 🔍 **AI-Powered Analysis** – Uses OpenAI GPT to detect malicious patterns
-- 🛡️ **Risk Assessment** – Get risk levels (Critical, High, Medium, Low, Safe)
-- 📋 **Function Selector Analysis** – Examines the first 4 bytes of calldata
-- 💡 **Heuristic Fallback** – Works even without an API key
-- ⚡ **Transaction Hash Support** – Paste a hash or raw calldata
-
-**How to Use:**
-1. Click the **"Verify TX"** button in the navigation bar
-2. Paste a transaction hash (from Etherscan) or raw calldata
-3. Get instant risk analysis and recommendations
-4. Make informed decisions before signing!
-
-**Setup (Optional):**
-Add `VITE_OPENAI_API_KEY` to your `frontend/.env` for enhanced AI analysis. Without it, the verifier uses heuristic analysis.
+# Fuzz / invariant tests (128 runs, depth 128 — configured in foundry.toml)
+forge test --match-path "test/fuzz/*"
+```
 
 ---
 
-## 🏗️ Smart Contracts
+## Deploy to Sepolia
 
-### Core Contracts
+```bash
+export PRIVATE_KEY=your_private_key_without_0x
+export SEPOLIA_RPC_URL=https://sepolia.infura.io/v3/YOUR_KEY
+export ETHERSCAN_API_KEY=your_etherscan_api_key
 
-#### `DecentralizedStableCoin.sol`
-- ERC20 token implementation
-- Burnable (users can burn their DSC)
-- Ownable (DSCEngine controls minting)
-
-#### `DSCEngine.sol`
-The heart of the protocol:
-
-**Functions:**
-- `depositCollateral()` – Lock WETH/WBTC
-- `redeemCollateral()` – Withdraw collateral (must burn DSC first)
-- `mintDsc()` – Create DSC tokens
-- `burnDsc()` – Destroy DSC tokens (reduces debt)
-- `liquidate()` – Close unhealthy positions
-- `getHealthFactor()` – Calculate position safety
-- `getAccountCollateralValue()` – Total collateral in USD
-
-**Security Features:**
-- ReentrancyGuard
-- Health factor checks before risky operations
-- Only allowed collateral tokens
-- Chainlink price feed integration
-
-#### `OracleLib.sol`
-- Price feed helpers
-- Staleness checks
-- Round completeness validation
+./deploy-sepolia.sh
+```
 
 ---
 
-## 🔄 Usage Flow
+## Protocol Mechanics
 
-### Complete User Journey
+### Health Factor
 
-1. **🌐 Visit Landing Page**
-   - Admire the beautiful design
-   - Read about Merix Holdings' features
-   - Watch the live market ticker
+The health factor is the single number that determines whether a position is safe.
 
-2. **🔗 Connect Wallet**
-   - Click "Connect Wallet"
-   - MetaMask opens with account selection
-   - App automatically switches to dashboard
+```
+Health Factor = (Total Collateral Value USD × Liquidation Threshold) / Total DSC Minted
 
-3. **💰 Deposit Collateral**
-   - Navigate to **Deposit** tab
-   - Select WETH or WBTC
-   - Enter amount (or click MAX)
-   - Approve token (first time only)
-   - Confirm deposit transaction
+Liquidation Threshold = 50%  →  collateral must be 2× the DSC debt
+Minimum Health Factor = 1.0  →  below this, position can be liquidated
+```
 
-4. **🪙 Mint DSC**
-   - Go to **Mint DSC** tab
-   - Enter desired DSC amount
-   - System checks health factor
-   - Confirm mint transaction
+| Health Factor | Status |
+|---|---|
+| > 2.0 | Safe — well collateralized |
+| 1.0 – 2.0 | Caution — monitor your position |
+| < 1.0 | Liquidatable |
 
-5. **🔄 Manage Position**
-   - **Redeem**: Withdraw collateral by burning DSC
-   - **Burn**: Reduce DSC debt to improve health
-   - Monitor your health factor on the dashboard
+### Liquidation
 
-6. **⚡ Liquidate (Advanced)**
-   - Find unhealthy positions
-   - Use **Liquidate** tab
-   - Repay their DSC debt
-   - Receive collateral + bonus
+When a user's health factor drops below `1.0`, anyone can call `liquidate()`. The liquidator repays some or all of the user's DSC debt and receives the equivalent collateral value **plus a 10% bonus**. This incentivizes external actors to keep the protocol solvent at all times.
 
-7. **🔒 Verify Transactions**
-   - Before signing any suspicious transaction
-   - Use **Verify TX** to analyze calldata
-   - Get AI-powered risk assessment
-   - Make informed decisions
+### Yield Aggregator
 
----
+The `YieldAggregator` is a separate contract that accepts DSC and mints `yDSC` shares (ERC4626-style). Share price increases over time as simulated yield accrues. It is architecturally isolated from `DSCEngine` — depositing into the vault does **not** affect collateral, DSC debt, or health factor.
 
-## 📚 Additional Documentation
+Available strategies:
 
-- 📖 [`FRONTEND_SETUP.md`](./FRONTEND_SETUP.md) – Detailed frontend setup guide
-- 🚀 [`DEPLOY_SEPOLIA.md`](./DEPLOY_SEPOLIA.md) – Complete Sepolia deployment walkthrough
-- 🔍 [`GET_ADDRESSES.md`](./GET_ADDRESSES.md) – How to retrieve and manage contract addresses
-- ⚡ [`SEPOLIA_QUICK_START.md`](./SEPOLIA_QUICK_START.md) – Quick reference for Sepolia setup
+| Strategy | Risk | APY |
+|---|---|---|
+| XAU (Gold) | Low | 4% |
+| XAG (Silver) | Low | 3% |
+| Aave Lending | Low | 5% |
+| Compound | Medium | 6% |
+
+### AI Transaction Security Verifier
+
+Before signing any unknown transaction in MetaMask, paste the calldata into the **Verify TX** tab. The verifier:
+
+1. Extracts the 4-byte function selector
+2. Resolves it against the local protocol ABI, then [4byte.directory](https://www.4byte.directory/)
+3. Sends the full calldata to an LLM (local Ollama first, Groq as cloud fallback) for risk analysis
+4. Returns a risk rating: **Safe / Low / Medium / High / Critical**
+
+Runs fully locally with Ollama — no data sent to external servers unless Groq fallback is triggered.
 
 ---
 
-## 💡 Tips & Troubleshooting
+## Tech Stack
 
-### Common Issues
-
-**🔴 Frontend not updating?**
-- Restart `npm run dev` after changing `.env`
-- Clear browser cache
-- Check that addresses in `.env` match deployment output
-
-**🔴 MetaMask auto-connecting wrong account?**
-1. Use MetaMask "Connected sites" to disconnect
-2. Click **Disconnect** button in the app
-3. Reconnect – the app forces account selection
-
-**🔴 Transaction failing?**
-- Check your health factor (must stay above 1.0)
-- Ensure you have enough collateral
-- Verify you're on the correct network (Sepolia or local)
-
-**🔴 Dropdown not visible?**
-- The select dropdown should now have proper dark styling
-- If issues persist, check browser console for errors
-
-### Development Tips
-
-- 🧪 **Testing**: Run `forge test` to execute all smart contract tests
-- 📝 **Linting**: Use `forge fmt` to format Solidity code
-- 🔍 **Debugging**: Check browser console and Foundry logs
-- 🎨 **Styling**: Main styles in `frontend/src/App.css`
+| Layer | Technology |
+|---|---|
+| Smart Contracts | Solidity 0.8.18, Foundry, OpenZeppelin, Chainlink |
+| Testing | Forge unit tests, fuzz tests, invariant tests |
+| Frontend | React 18, Vite 5, ethers.js v6 |
+| Wallet | MetaMask (EIP-1193) |
+| Market Data | CoinGecko API |
+| AI Verifier | Ollama (local LLM) + Groq (cloud fallback) |
+| Network | Ethereum Sepolia Testnet |
 
 ---
 
-## 🛠️ Tech Stack
+## Authors
 
-### Smart Contracts
-- **Solidity** 0.8.19+
-- **Foundry** – Development framework
-- **Chainlink** – Price feeds
-- **OpenZeppelin** – Security libraries
-
-### Frontend
-- **React** 18+
-- **Vite** – Build tool
-- **Ethers.js** – Ethereum interaction
-- **CoinGecko API** – Market data
-
-### Security
-- **ReentrancyGuard** – Protection against reentrancy attacks
-- **Access Control** – Ownable pattern
-- **Health Factor Checks** – Prevent unsafe operations
-- **AI Transaction Verification** – Additional security layer
+**Raghuvansh Rastogi** — Protocol design, smart contracts, frontend
+**Ashutosh Tandon** — Smart contract co-author
+**Praveen Kumar** — Smart contract co-author
 
 ---
 
-## 🤝 Contributing
+## License
 
-This is a personal project, but suggestions and feedback are welcome! If you find any issues or have ideas for improvements, feel free to open an issue.
-
----
-
-## 📄 License
-
-This project is open source. See individual files for specific licenses.
-
----
-
-## 🙏 Acknowledgments
-
-- **Chainlink** for reliable price feeds
-- **OpenZeppelin** for battle-tested security patterns
-- **Foundry** for an amazing development experience
-- **Ethereum** for the decentralized infrastructure
+MIT — see individual source files for specifics.
 
 ---
 
 <div align="center">
 
-### 💎 Built with passion and precision 💎
+**Merix Holdings** — Stability Meets Innovation
 
-**Merix Holdings** – Where elegance meets DeFi
-
-⭐ Star this repo if you find it helpful!
+[GitHub](https://github.com/Ra9huvansh/Merix-Holdings) · [Twitter](https://x.com/Raghuvansh95)
 
 </div>
-
----
-
-## 📞 Support
-
-Having issues? Check the documentation files or review the smart contract comments in `src/DSCEngine.sol` for detailed protocol information.
-
----
-
-**Made with ❤️ for the DeFi community**
-
-*"A minimal, bold, and fully interactive decentralized stablecoin platform."*

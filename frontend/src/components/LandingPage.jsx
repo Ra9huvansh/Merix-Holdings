@@ -4,9 +4,64 @@ import AdminPanel from "./AdminPanel";
 const LandingPage = ({ connectWallet, isConnecting }) => {
   const [scrollY, setScrollY] = useState(0);
   const heroRef = useRef(null);
+  const canvasRef = useRef(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [adminOpen, setAdminOpen] = useState(false);
   const dropdownRef = useRef(null);
+
+  // Scroll reveal
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add("is-visible"); } }),
+      { threshold: 0.12 }
+    );
+    document.querySelectorAll(".reveal").forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, []);
+
+  // Star field canvas
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    let animId;
+
+    const setSize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    setSize();
+    window.addEventListener("resize", setSize);
+
+    const stars = Array.from({ length: 160 }, () => ({
+      x: Math.random(),
+      y: Math.random(),
+      r: Math.random() * 1.1 + 0.2,
+      baseOpacity: Math.random() * 0.55 + 0.15,
+      phase: Math.random() * Math.PI * 2,
+      speed: Math.random() * 0.007 + 0.002,
+    }));
+
+    let t = 0;
+    const draw = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      t += 1;
+      stars.forEach((s) => {
+        const opacity = s.baseOpacity * (0.35 + 0.65 * Math.sin(s.phase + t * s.speed));
+        ctx.beginPath();
+        ctx.arc(s.x * canvas.width, s.y * canvas.height, s.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255,255,255,${opacity.toFixed(3)})`;
+        ctx.fill();
+      });
+      animId = requestAnimationFrame(draw);
+    };
+    draw();
+
+    return () => {
+      cancelAnimationFrame(animId);
+      window.removeEventListener("resize", setSize);
+    };
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -28,32 +83,67 @@ const LandingPage = ({ connectWallet, isConnecting }) => {
 
   const features = [
     {
-      icon: "🔒",
+      icon: (
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+          <rect x="3" y="11" width="18" height="11" rx="2.5" stroke="currentColor" strokeWidth="1.5"/>
+          <path d="M7 11V7a5 5 0 0110 0v4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+        </svg>
+      ),
       title: "Decentralized Collateral",
       description: "Deposit WETH and WBTC as collateral to mint stablecoins. Your assets remain in your control."
     },
     {
-      icon: "⚖️",
+      icon: (
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+          <path d="M12 3v18M3 12h18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" opacity="0.3"/>
+          <circle cx="12" cy="12" r="7" stroke="currentColor" strokeWidth="1.5"/>
+          <path d="M8 12h8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+          <path d="M10 9l2-2 2 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M10 15l2 2 2-2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      ),
       title: "Over-Collateralized",
       description: "Maintain a healthy collateralization ratio to ensure stability and security of the protocol."
     },
     {
-      icon: "💎",
+      icon: (
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.5"/>
+          <path d="M12 8v8M9 10h4.5a1.5 1.5 0 010 3H9M9 13h5a1.5 1.5 0 010 3H9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+        </svg>
+      ),
       title: "Mint Stablecoins",
       description: "Mint Merix Holdings (DSC) tokens against your collateral at any time, maintaining liquidity."
     },
     {
-      icon: "🔄",
+      icon: (
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+          <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+          <path d="M20 12a8 8 0 01-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+          <path d="M2 9l2 3 3-2M22 15l-2-3-3 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      ),
       title: "Redeem Anytime",
       description: "Redeem your collateral by burning DSC tokens. Full control over your assets."
     },
     {
-      icon: "⚡",
+      icon: (
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+          <path d="M12 2L3 7v6c0 5 3.6 9.74 9 11 5.4-1.26 9-6 9-11V7l-9-5z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
+          <path d="M9 12l2 2 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      ),
       title: "Liquidation Protection",
       description: "Automated liquidation system protects the protocol while maintaining fairness."
     },
     {
-      icon: "📊",
+      icon: (
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+          <path d="M3 17l4-5 4 3 4-7 4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          <circle cx="20" cy="12" r="1" fill="currentColor"/>
+          <path d="M3 20h18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" opacity="0.4"/>
+        </svg>
+      ),
       title: "Real-Time Pricing",
       description: "Chainlink price feeds ensure accurate collateral valuation in real-time."
     }
@@ -117,6 +207,7 @@ const LandingPage = ({ connectWallet, isConnecting }) => {
 
   return (
     <div className="landing-page">
+      <canvas ref={canvasRef} className="star-canvas" />
 
       {/* Top Nav — hamburger only */}
       <nav className="landing-nav">
@@ -158,7 +249,7 @@ const LandingPage = ({ connectWallet, isConnecting }) => {
                 </svg>
                 Community
               </a>
-              <a href="#" className="ln-dropdown-item">
+              <a href="https://github.com/Ra9huvansh/Merix-Holdings" target="_blank" rel="noopener noreferrer" className="ln-dropdown-item">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
                   <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0020 4.77 5.07 5.07 0 0019.91 1S18.73.65 16 2.48a13.38 13.38 0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 005 4.77a5.44 5.44 0 00-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 009 18.13V22"
                     stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -265,12 +356,13 @@ const LandingPage = ({ connectWallet, isConnecting }) => {
           </div>
           <div className="features-grid">
             {features.map((feature, index) => (
-              <div 
-                key={index} 
-                className="feature-card"
-                style={{ animationDelay: `${index * 0.1}s` }}
+              <div
+                key={index}
+                className="feature-card reveal"
+                style={{ transitionDelay: `${index * 0.1}s` }}
               >
                 <div className="feature-icon">{feature.icon}</div>
+
                 <h3 className="feature-title">{feature.title}</h3>
                 <p className="feature-description">{feature.description}</p>
               </div>
@@ -291,10 +383,10 @@ const LandingPage = ({ connectWallet, isConnecting }) => {
           </div>
           <div className="use-cases-grid">
             {useCases.map((useCase, index) => (
-              <div 
-                key={index} 
-                className="use-case-card"
-                style={{ animationDelay: `${index * 0.1}s` }}
+              <div
+                key={index}
+                className="use-case-card reveal"
+                style={{ transitionDelay: `${index * 0.1}s` }}
               >
                 <div className="use-case-number">{String(index + 1).padStart(2, '0')}</div>
                 <h3 className="use-case-title">{useCase.title}</h3>
@@ -313,7 +405,7 @@ const LandingPage = ({ connectWallet, isConnecting }) => {
             <h2 className="section-title">Simple. Secure. Powerful.</h2>
           </div>
           <div className="steps-container">
-            <div className="step">
+            <div className="step reveal" style={{ transitionDelay: "0s" }}>
               <div className="step-number">01</div>
               <div className="step-content">
                 <h3 className="step-title">Deposit Collateral</h3>
@@ -323,7 +415,7 @@ const LandingPage = ({ connectWallet, isConnecting }) => {
               </div>
             </div>
             <div className="step-connector"></div>
-            <div className="step">
+            <div className="step reveal" style={{ transitionDelay: "0.2s" }}>
               <div className="step-number">02</div>
               <div className="step-content">
                 <h3 className="step-title">Mint Stablecoins</h3>
@@ -333,7 +425,7 @@ const LandingPage = ({ connectWallet, isConnecting }) => {
               </div>
             </div>
             <div className="step-connector"></div>
-            <div className="step">
+            <div className="step reveal" style={{ transitionDelay: "0.4s" }}>
               <div className="step-number">03</div>
               <div className="step-content">
                 <h3 className="step-title">Use or Redeem</h3>
@@ -447,8 +539,8 @@ const LandingPage = ({ connectWallet, isConnecting }) => {
               <div className="footer-column">
                 <h4 className="footer-heading">Community</h4>
                 <a href="#" className="footer-link">Discord</a>
-                <a href="#" className="footer-link">Twitter</a>
-                <a href="#" className="footer-link">GitHub</a>
+                <a href="https://x.com/Raghuvansh95" target="_blank" rel="noopener noreferrer" className="footer-link">Twitter</a>
+                <a href="https://github.com/Ra9huvansh/Merix-Holdings" target="_blank" rel="noopener noreferrer" className="footer-link">GitHub</a>
               </div>
             </div>
           </div>
