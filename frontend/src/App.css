@@ -1163,11 +1163,14 @@
 }
 
 .network-badge {
-  color: white;
-  padding: 8px 16px;
-  border-radius: 10px;
-  font-weight: 600;
+  color: rgba(255, 255, 255, 0.85);
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-weight: 500;
   font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   backdrop-filter: blur(10px);
@@ -1176,9 +1179,11 @@
   transition: all 0.3s ease;
 }
 
-.network-badge:hover {
-  background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(255, 255, 255, 0.25);
+.network-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
 }
 
 .account-info {

@@ -56,7 +56,8 @@ function App() {
             </button>
           </div>
           <div className="header-right">
-            <div className="network-badge" style={{ backgroundColor: getNetworkColor(CHAIN_ID) }}>
+            <div className="network-badge" style={{ borderColor: `${getNetworkColor(CHAIN_ID)}55` }}>
+              <span className="network-dot" style={{ background: getNetworkColor(CHAIN_ID), boxShadow: `0 0 6px ${getNetworkColor(CHAIN_ID)}` }}></span>
               {getNetworkName(CHAIN_ID)}
             </div>
             <div className="account-info">
