@@ -110,7 +110,7 @@ export default function FAQ() {
           Connect your wallet and start minting stablecoins against your crypto assets today.
         </p>
         <a
-          href="https://merix-holdings.vercel.app"
+          href="https://merix-holdings-nine.vercel.app"
           target="_blank"
           rel="noopener noreferrer"
           style={{

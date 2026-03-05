@@ -55,7 +55,7 @@ export default function Header({ theme, toggleTheme, toggleSidebar }) {
           {theme === 'light' ? <MoonIcon /> : <SunIcon />}
         </button>
         <a
-          href="https://merix-holdings.vercel.app"
+          href="https://merix-holdings-nine.vercel.app"
           target="_blank"
           rel="noopener noreferrer"
           className="header-launch-btn"

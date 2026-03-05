@@ -109,7 +109,7 @@ export default function GettingStarted() {
           <div className="step-body">
             <div className="step-title">Connect your wallet</div>
             <p className="step-desc">
-              Visit the <a href="https://merix-holdings.vercel.app" target="_blank" rel="noopener noreferrer">Merix Holdings app</a>.
+              Visit the <a href="https://merix-holdings-nine.vercel.app" target="_blank" rel="noopener noreferrer">Merix Holdings app</a>.
               Click <strong>"Connect Wallet"</strong> on the landing page. MetaMask will pop up — select your account
               and confirm. You'll be taken straight to the dashboard.
             </p>
