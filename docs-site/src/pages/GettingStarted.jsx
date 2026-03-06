@@ -147,6 +147,13 @@ export default function GettingStarted() {
         Read more about the <Link to="/concepts/health-factor">Health Factor</Link>.
       </Callout>
 
+      <Callout type="tip" title="Put your DSC to work">
+        Once you've minted DSC, don't let it sit idle. Head to the <strong>Yield</strong> tab
+        and deposit your DSC into one of five strategies — XAU, XAG, Aave, Compound, or Uniswap LP —
+        to earn passive income completely separate from your collateral position.
+        Learn more in the <Link to="/concepts/yield">Yield Aggregator</Link> docs.
+      </Callout>
+
       <div className="page-divider" />
 
       <h2 className="section-heading">Understanding your dashboard</h2>

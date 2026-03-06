@@ -33,8 +33,8 @@ export default function Overview() {
         </div>
         <div className="stat-card">
           <div className="stat-label">Yield Strategies</div>
-          <div className="stat-value">4+</div>
-          <div className="stat-sub">XAU, XAG, Aave, Compound</div>
+          <div className="stat-value">5</div>
+          <div className="stat-sub">XAU, XAG, Aave, Compound, Uniswap LP</div>
         </div>
         <div className="stat-card">
           <div className="stat-label">Liquidation Bonus</div>

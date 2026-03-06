@@ -43,6 +43,18 @@ const faqs = [
     a: "The Verify TX tab lets you paste any Ethereum transaction hash or raw calldata. The tool extracts the 4-byte function selector, resolves it against the protocol's ABI and the 4byte.directory database, then sends the full calldata to a large language model (locally via Ollama, or via Groq as a cloud fallback). The LLM analyzes the transaction for suspicious patterns and returns a risk rating from Safe to Critical. This helps you verify transactions before signing them in MetaMask."
   },
   {
+    q: "What is the difference between unrealized and realized profit in the Yield Aggregator?",
+    a: "Unrealized profit is the difference between what your yDSC shares are currently worth and what you originally deposited — it only exists on paper while your shares are still in the vault. Realized profit is locked in on-chain the moment you withdraw more DSC than you deposited. Only realized profit counts for the Redemption Contract — you cannot convert unrealized (paper) gains to WETH collateral, only profit you have actually withdrawn."
+  },
+  {
+    q: "Why do I still have yDSC shares after withdrawing everything from a strategy?",
+    a: "This is a known quirk of how yield accrues. Every time someone interacts with the vault, a harvest function runs and adds simulated yield, which increases totalAssets. If you withdraw your original deposit amount (not your full current value), the vault burns fewer shares than you own — leaving a small residual. These shares still have value. Use the 'Withdraw Residual Shares' button that appears automatically in the Yield terminal to recover them in a single transaction."
+  },
+  {
+    q: "What does the Redemption Contract do and when should I use it?",
+    a: "After withdrawing from the Yield Aggregator and realizing a profit, you hold extra DSC in your wallet. Instead of just sitting on it, you can use the 'Redeem DSC → Collateral' tab to convert that profit DSC directly into WETH collateral inside DSCEngine — in a single transaction. The DSC is permanently burned, and equivalent WETH (priced at the live Chainlink ETH/USD rate) is deposited as collateral, immediately improving your health factor. You can only redeem up to your on-chain realizedProfit balance — the UI enforces this cap automatically."
+  },
+  {
     q: "Is this on mainnet? Can I use real money?",
     a: "Currently, Merix Holdings is deployed on Ethereum's Sepolia testnet only. All tokens have no real monetary value. Mainnet deployment is a future milestone. Do not attempt to use real ETH or BTC with this protocol."
   },
