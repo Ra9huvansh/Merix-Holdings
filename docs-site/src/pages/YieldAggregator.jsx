@@ -66,6 +66,12 @@ export default function YieldAggregator() {
               <td>6%</td>
               <td>DSC supplied to a Compound-style money market</td>
             </tr>
+            <tr>
+              <td><strong>Uniswap LP</strong></td>
+              <td><span className="badge badge-red">High</span></td>
+              <td>18%</td>
+              <td>DSC deployed as liquidity in a simulated Uniswap pool</td>
+            </tr>
           </tbody>
         </table>
       </div>
@@ -166,12 +172,37 @@ export default function YieldAggregator() {
         exceed your deposit.
       </Callout>
 
+      <h2 className="section-heading">Realized vs Unrealized Profit</h2>
+      <p>
+        <strong>Unrealized profit</strong> is the difference between your current share value and what you deposited — it only exists on paper until you withdraw.
+      </p>
+      <p>
+        <strong>Realized profit</strong> is recorded on-chain inside <code>YieldAggregator</code> the moment you withdraw more DSC than you originally deposited. This balance is what the <code>RedemptionContract</code> checks before converting your profit to WETH collateral — you can only redeem up to your realized profit, not a single DSC more.
+      </p>
+
+      <Callout type="warning" title="Withdrawing at principal leaves residual shares">
+        Because yield accrues continuously via <code>_harvestAll()</code>, the number of shares
+        burned when you withdraw is calculated against a moving <code>totalAssets</code>. If you
+        withdraw only your original deposit amount (not your full current value), you will burn
+        fewer shares than you own — leaving residual yDSC shares with no corresponding strategy
+        deposit. Use the <strong>Withdraw Residual Shares</strong> button that appears automatically
+        in the UI to recover them.
+      </Callout>
+
       <h2 className="section-heading">Redeem DSC as Collateral</h2>
       <p>
-        The vault also has a <strong>Redeem DSC → Collateral</strong> tab. This lets you take
-        your withdrawn DSC profits and convert them directly into WETH or WBTC collateral —
-        compounding your position without extra steps.
+        The <strong>Redeem DSC → Collateral</strong> tab lets you convert your realized profit DSC
+        directly into WETH collateral inside DSCEngine — compounding your position in one transaction.
+        The conversion rate is the <strong>live Chainlink ETH/USD price</strong> (not a hardcoded value).
+        The DSC is permanently burned and the equivalent WETH is deposited as collateral, immediately
+        improving your health factor.
       </p>
+
+      <Callout type="info" title="Only realized profit qualifies">
+        You can only redeem DSC up to your recorded <code>realizedProfit</code> balance. Attempting
+        to redeem more will revert on-chain. The UI also enforces this cap client-side and disables
+        the confirm button if your input exceeds your available realized profit.
+      </Callout>
 
       <div className="page-nav">
         <Link to="/concepts/liquidation" className="page-nav-link">

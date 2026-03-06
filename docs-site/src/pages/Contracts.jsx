@@ -15,16 +15,32 @@ export default function Contracts() {
       <div className="address-row">
         <span className="address-label">DSCEngine</span>
         <span className="address-value">
-          <a href="https://sepolia.etherscan.io/address/0xd1eb2Adaad17584e8162f4f89cDAf9D5Fe3e6417" target="_blank" rel="noopener noreferrer">
-            0xd1eb2Adaad17584e8162f4f89cDAf9D5Fe3e6417
+          <a href="https://sepolia.etherscan.io/address/0xfd4aDeDA26D812f30328177cBe8f70C3A53547B3" target="_blank" rel="noopener noreferrer">
+            0xfd4aDeDA26D812f30328177cBe8f70C3A53547B3
           </a>
         </span>
       </div>
       <div className="address-row">
         <span className="address-label">DecentralizedStableCoin</span>
         <span className="address-value">
-          <a href="https://sepolia.etherscan.io/address/0x9AF0bEF4048DCb7a336741058A04B31A35D0A934" target="_blank" rel="noopener noreferrer">
-            0x9AF0bEF4048DCb7a336741058A04B31A35D0A934
+          <a href="https://sepolia.etherscan.io/address/0xc1e231e7A88348821Ab534c9A080392706F71585" target="_blank" rel="noopener noreferrer">
+            0xc1e231e7A88348821Ab534c9A080392706F71585
+          </a>
+        </span>
+      </div>
+      <div className="address-row">
+        <span className="address-label">YieldAggregator</span>
+        <span className="address-value">
+          <a href="https://sepolia.etherscan.io/address/0xdd6F63a4981E898289f4420e0c3070FAb7eE9b7B" target="_blank" rel="noopener noreferrer">
+            0xdd6F63a4981E898289f4420e0c3070FAb7eE9b7B
+          </a>
+        </span>
+      </div>
+      <div className="address-row">
+        <span className="address-label">RedemptionContract</span>
+        <span className="address-value">
+          <a href="https://sepolia.etherscan.io/address/0xC6C011ad96CA0fA9c12CFFf6bfb9508B9Ea2F55e" target="_blank" rel="noopener noreferrer">
+            0xC6C011ad96CA0fA9c12CFFf6bfb9508B9Ea2F55e
           </a>
         </span>
       </div>
@@ -214,6 +230,8 @@ export default function Contracts() {
       <h2 className="section-heading">YieldAggregator.sol</h2>
       <p>
         The ERC4626-style vault for DSC yield. Fully independent from <code>DSCEngine</code>.
+        Tracks <code>realizedProfit</code> per user — profit earned on withdrawals that can
+        be converted to WETH collateral via <code>RedemptionContract</code>.
       </p>
 
       <div className="table-wrapper">
@@ -221,33 +239,93 @@ export default function Contracts() {
           <thead>
             <tr>
               <th>Function</th>
+              <th>Access</th>
               <th>Description</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td><code>deposit(amount, strategy)</code></td>
-              <td>Deposit DSC into a specific yield strategy. Returns yDSC shares.</td>
+              <td><code>depositToStrategy(strategyId, amount)</code></td>
+              <td>Public</td>
+              <td>Deposit DSC into a specific yield strategy. Mints proportional yDSC shares.</td>
             </tr>
             <tr>
-              <td><code>withdraw(shares)</code></td>
-              <td>Burn yDSC shares and receive DSC back (with accrued yield).</td>
+              <td><code>withdrawFromStrategy(strategyId, dscAmount)</code></td>
+              <td>Public</td>
+              <td>Withdraw DSC from a strategy. Profit above principal is added to <code>realizedProfit</code>.</td>
+            </tr>
+            <tr>
+              <td><code>withdrawRemainingShares()</code></td>
+              <td>Public</td>
+              <td>Burns all remaining yDSC shares when strategy deposits are zero. Recovers residual yield shares that would otherwise be stuck.</td>
+            </tr>
+            <tr>
+              <td><code>deductRealizedProfit(user, amount)</code></td>
+              <td>RedemptionContract only</td>
+              <td>Reduces a user's realized profit balance after a successful redemption, preventing double-spend.</td>
             </tr>
             <tr>
               <td><code>fundYieldReserve(amount)</code></td>
-              <td>Owner-only. Pre-fund the vault with DSC to pay out yield.</td>
+              <td>Owner only</td>
+              <td>Pre-fund the vault with DSC to back yield payouts.</td>
             </tr>
             <tr>
-              <td><code>getUserShares(user)</code></td>
-              <td>Returns a user's total yDSC share balance.</td>
+              <td><code>setRedemptionContract(address)</code></td>
+              <td>Owner only</td>
+              <td>Authorises the RedemptionContract to call <code>deductRealizedProfit</code>.</td>
             </tr>
             <tr>
-              <td><code>getShareValue(shares)</code></td>
-              <td>Returns current DSC value of a given number of shares.</td>
+              <td><code>getUserInfo(user)</code></td>
+              <td>View</td>
+              <td>Returns shares, principal, realizedProfit, and current value for any address.</td>
             </tr>
           </tbody>
         </table>
       </div>
+
+      <div className="page-divider" />
+
+      <h2 className="section-heading">RedemptionContract.sol</h2>
+      <p>
+        Converts a user's realized yield profit (in DSC) into WETH collateral directly inside DSCEngine.
+        The DSC is burned permanently and equivalent WETH — priced via the <strong>live Chainlink oracle</strong> — is
+        deposited as collateral on the user's behalf, immediately improving their health factor.
+      </p>
+
+      <div className="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Function</th>
+              <th>Access</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>redeemDscForWeth(dscAmount)</code></td>
+              <td>Public</td>
+              <td>Burns DSC and deposits equivalent WETH as collateral. Amount must not exceed caller's <code>realizedProfit</code> in YieldAggregator.</td>
+            </tr>
+            <tr>
+              <td><code>fund(wethAmount)</code></td>
+              <td>Owner only</td>
+              <td>Pre-funds the contract with WETH to back future redemptions.</td>
+            </tr>
+            <tr>
+              <td><code>getWethBalance()</code></td>
+              <td>View</td>
+              <td>Returns current WETH reserve held by the contract.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <Callout type="warning" title="Redemption cap enforced on-chain">
+        <code>redeemDscForWeth</code> will revert with <code>ExceedsRealizedProfit</code> if you attempt
+        to redeem more DSC than your recorded realized profit in YieldAggregator. You cannot redeem
+        DSC that came from minting or other sources — only earned yield profit qualifies.
+      </Callout>
 
       <Callout type="info">
         All contracts are open source. View and verify the code on{' '}
