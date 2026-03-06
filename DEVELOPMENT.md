@@ -55,13 +55,13 @@ src/                     — Solidity smart contracts
   DSCEngine.sol          — Core engine (collateral, mint, burn, liquidate)
   DecentralizedStableCoin.sol
   yield/
-    YieldAggregator.sol  — DSC yield strategies
-    RedemptionContract.sol — DSC → WETH collateral redemption
+    YieldAggregator.sol  — DSC yield vault (realizedProfit tracking, withdrawRemainingShares)
+    RedemptionContract.sol — Profit DSC → WETH collateral (live Chainlink price, profit cap)
   libraries/
     OracleLib.sol        — Chainlink stale price check
 
 script/                  — Foundry deployment scripts
-  DeployAll.s.sol        — Deploys all 4 contracts
+  DeployAll.s.sol        — Deploys all 4 contracts + wires cross-contract references
   HelperConfig.s.sol     — Network config (Sepolia vs Anvil)
 
 test/unit/               — Unit tests

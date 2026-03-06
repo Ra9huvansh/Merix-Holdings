@@ -123,11 +123,11 @@ Wrapper around Chainlink `AggregatorV3Interface` that adds staleness checks. If 
 
 ### `YieldAggregator.sol`
 
-An ERC4626-style vault that accepts DSC and issues `yDSC` shares. Deposits are allocated across simulated strategies (XAU, XAG, Aave, Compound). Yield accrues via `_harvestAll()` which grows `totalAssets` on every interaction. Operates completely independently from `DSCEngine` — your health factor is never affected.
+An ERC4626-style vault that accepts DSC and issues `yDSC` shares across 5 simulated strategies (XAU, XAG, Aave, Compound, Uniswap LP). Yield accrues via `_harvestAll()` on every interaction. Completely isolated from `DSCEngine` — health factor is never affected. When a user withdraws more than their deposited principal, the surplus is recorded as `realizedProfit` and can be converted to WETH collateral via `RedemptionContract`. If residual shares remain after all strategy deposits are cleared, `withdrawRemainingShares()` allows a full exit.
 
 ### `RedemptionContract.sol`
 
-Utility contract for converting yDSC vault proceeds back into collateral. Allows users to redeem DSC profits directly for WETH/WBTC.
+Converts realized yield profit DSC into WETH collateral directly inside DSCEngine. Only the caller's `realizedProfit` balance (tracked by `YieldAggregator`) can be redeemed — preventing any user from redeeming more than they earned. DSC is burned permanently and equivalent WETH (priced via live Chainlink oracle) is deposited as collateral, immediately improving health factor.
 
 ---
 
@@ -192,8 +192,10 @@ Merix-Holdings/
 
 | Contract | Address |
 |---|---|
-| DSCEngine | [`0xd1eb2Adaad17584e8162f4f89cDAf9D5Fe3e6417`](https://sepolia.etherscan.io/address/0xd1eb2Adaad17584e8162f4f89cDAf9D5Fe3e6417) |
-| DecentralizedStableCoin (DSC) | [`0x9AF0bEF4048DCb7a336741058A04B31A35D0A934`](https://sepolia.etherscan.io/address/0x9AF0bEF4048DCb7a336741058A04B31A35D0A934) |
+| DSCEngine | [`0xfd4aDeDA26D812f30328177cBe8f70C3A53547B3`](https://sepolia.etherscan.io/address/0xfd4aDeDA26D812f30328177cBe8f70C3A53547B3) |
+| DecentralizedStableCoin (DSC) | [`0xc1e231e7A88348821Ab534c9A080392706F71585`](https://sepolia.etherscan.io/address/0xc1e231e7A88348821Ab534c9A080392706F71585) |
+| YieldAggregator | [`0xdd6F63a4981E898289f4420e0c3070FAb7eE9b7B`](https://sepolia.etherscan.io/address/0xdd6F63a4981E898289f4420e0c3070FAb7eE9b7B) |
+| RedemptionContract | [`0xC6C011ad96CA0fA9c12CFFf6bfb9508B9Ea2F55e`](https://sepolia.etherscan.io/address/0xC6C011ad96CA0fA9c12CFFf6bfb9508B9Ea2F55e) |
 | WETH (Sepolia) | [`0xdd13E55209Fd76AfE204dBda4007C227904f0a81`](https://sepolia.etherscan.io/address/0xdd13E55209Fd76AfE204dBda4007C227904f0a81) |
 | WBTC (Sepolia) | [`0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063`](https://sepolia.etherscan.io/address/0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063) |
 
@@ -232,10 +234,12 @@ cd frontend && npm install && cd ..
 Create `frontend/.env`:
 
 ```env
-VITE_DSC_ENGINE_ADDRESS=0xd1eb2Adaad17584e8162f4f89cDAf9D5Fe3e6417
-VITE_DSC_TOKEN_ADDRESS=0x9AF0bEF4048DCb7a336741058A04B31A35D0A934
+VITE_DSC_ENGINE_ADDRESS=0xfd4aDeDA26D812f30328177cBe8f70C3A53547B3
+VITE_DSC_TOKEN_ADDRESS=0xc1e231e7A88348821Ab534c9A080392706F71585
 VITE_WETH_ADDRESS=0xdd13E55209Fd76AfE204dBda4007C227904f0a81
 VITE_WBTC_ADDRESS=0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063
+VITE_YIELD_AGGREGATOR_ADDRESS=0xdd6F63a4981E898289f4420e0c3070FAb7eE9b7B
+VITE_REDEMPTION_CONTRACT_ADDRESS=0xC6C011ad96CA0fA9c12CFFf6bfb9508B9Ea2F55e
 VITE_CHAIN_ID=11155111
 
 # AI Transaction Verifier (optional — one or both)

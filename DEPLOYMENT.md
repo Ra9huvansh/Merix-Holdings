@@ -2,14 +2,14 @@
 
 ## Current Sepolia Deployment
 
-Contracts are already deployed on Sepolia (chain ID 11155111). The `frontend/.env` is configured with these addresses:
+Contracts are deployed on Sepolia (chain ID 11155111). The `frontend/.env` is configured with these addresses:
 
 | Contract | Address |
 |---|---|
-| DSCEngine | `0x13eDe57f75fBb9B946D772a725C30E9d6a2a943B` |
-| DSC Token | `0xb21b832d1d231439B8F4B456e40eeBDa08136360` |
-| YieldAggregator | `0x5F6683C554Fcd9E1ee8EF0840B25F1Fa71359d4a` |
-| RedemptionContract | `0x45e730e8434940817230065687C17e535A0A96b6` |
+| DSCEngine | `0xfd4aDeDA26D812f30328177cBe8f70C3A53547B3` |
+| DSC Token | `0xc1e231e7A88348821Ab534c9A080392706F71585` |
+| YieldAggregator | `0xdd6F63a4981E898289f4420e0c3070FAb7eE9b7B` |
+| RedemptionContract | `0xC6C011ad96CA0fA9c12CFFf6bfb9508B9Ea2F55e` |
 | WETH (Sepolia) | `0xdd13E55209Fd76AfE204dBda4007C227904f0a81` |
 | WBTC (Sepolia) | `0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063` |
 
@@ -21,33 +21,20 @@ Price feeds (configured in `script/HelperConfig.s.sol`):
 
 ## Redeploying to Sepolia
 
-### 1. Set environment variables
-
-Add to the root `.env` file:
-```
-PRIVATE_KEY=your_private_key_here
-SEPOLIA_RPC_URL=https://sepolia.infura.io/v3/YOUR_KEY
-ETHERSCAN_API_KEY=your_etherscan_key   # optional, for contract verification
-```
-
-### 2. Deploy contracts
+### 1. Deploy contracts
 
 ```bash
-./deploy-sepolia.sh
-```
-
-Or manually:
-```bash
-CLEAN_KEY=$(grep "^PRIVATE_KEY" .env | cut -d'=' -f2- | tr -d '[:space:]') && \
-FOUNDRY_DISABLE_ENV_FILE=true forge script script/DeployAll.s.sol:DeployAll \
+forge script script/DeployAll.s.sol \
   --rpc-url $SEPOLIA_RPC_URL \
-  --private-key $CLEAN_KEY \
-  --broadcast --verify -vvvv
+  --broadcast \
+  --private-key $PRIVATE_KEY
 ```
 
-> **Note:** Use `--rpc-url` for deployment. `--fork-url` is only for fork tests.
+`DeployAll.s.sol` deploys all 4 contracts in the correct order and automatically wires the cross-contract references:
+- `DSCEngine.setRedemptionContract(redemption)` — authorises RedemptionContract to call `depositCollateralFor` and `burnExternal`
+- `YieldAggregator.setRedemptionContract(redemption)` — authorises RedemptionContract to call `deductRealizedProfit`
 
-### 3. Update frontend addresses
+### 2. Update frontend addresses
 
 Copy the printed addresses into `frontend/.env`:
 ```
@@ -60,19 +47,23 @@ VITE_WBTC_ADDRESS=0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063
 VITE_CHAIN_ID=11155111
 ```
 
-### 4. Seed the protocol reserves (Admin Panel)
+Also update the same 4 addresses in your **Vercel dashboard** env vars if deploying to production.
 
-After deploying, the YieldAggregator and RedemptionContract need to be funded:
-- Open the app → hamburger menu → Admin Panel → password: `14140709`
-- Fund DSC Yield Reserve (wrap ETH → WETH → fund)
-- Fund WETH Redemption Reserve
+### 3. Seed the protocol reserves (Admin Panel)
+
+After deploying, both reserve contracts start empty and must be funded:
+
+1. Open the app → hamburger menu → **Admin Panel** → password: `14140709`
+2. **Wrap ETH → WETH** — enter an ETH amount and click Wrap
+3. **Fund WETH Redemption Reserve** — funds `RedemptionContract` so users can redeem DSC → WETH collateral
+4. **Fund DSC Yield Reserve** — funds `YieldAggregator` so yield profit withdrawals can be paid out
 
 ---
 
 ## Troubleshooting
 
-**"Failed to decode private key"** — trailing space in `.env`. Use the `CLEAN_KEY` command above.
-
 **"Insufficient funds"** — get Sepolia ETH from [sepoliafaucet.com](https://sepoliafaucet.com/).
 
-**Contract verification failed** — make sure `ETHERSCAN_API_KEY` is set, or remove `--verify` flag.
+**Contract verification failed** — add `--verify` and set `ETHERSCAN_API_KEY`, or remove the flag.
+
+**Frontend shows wrong data after redeploy** — clear browser cache / MetaMask activity data, then hard refresh.
