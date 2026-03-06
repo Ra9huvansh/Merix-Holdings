@@ -48,10 +48,13 @@ contract DeployAll is Script {
 
         // ── Yield ─────────────────────────────────────────────────────────────
         YieldAggregator    yieldAgg   = new YieldAggregator(address(dsc));
-        RedemptionContract redemption = new RedemptionContract(address(dsc), WETH, address(engine));
+        RedemptionContract redemption = new RedemptionContract(address(dsc), WETH, address(engine), address(yieldAgg));
 
         // Authorise RedemptionContract in DSCEngine (required for depositCollateralFor + burnExternal)
         engine.setRedemptionContract(address(redemption));
+
+        // Authorise RedemptionContract in YieldAggregator (required for deductRealizedProfit)
+        yieldAgg.setRedemptionContract(address(redemption));
 
         vm.stopBroadcast();
 

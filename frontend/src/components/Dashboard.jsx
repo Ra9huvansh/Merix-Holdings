@@ -135,7 +135,7 @@ const Dashboard = () => {
                     </div>
                     <div className="position-item">
                       <span>Wallet Balance:</span>
-                      <span>{formatUnits(walletBalance, tokenInfo.decimals)} {tokenInfo.symbol}</span>
+                      <span>{parseFloat(formatUnits(walletBalance, tokenInfo.decimals)).toFixed(4)} {tokenInfo.symbol}</span>
                     </div>
                   </div>
                 </div>

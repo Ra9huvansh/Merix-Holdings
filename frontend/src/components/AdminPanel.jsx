@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import { ethers } from "ethers";
 import { useWeb3 } from "../hooks/useWeb3";
-import { YIELD_AGGREGATOR_ABI, REDEMPTION_CONTRACT_ABI, ERC20_ABI } from "../constants/abis";
+import { YIELD_AGGREGATOR_ABI, REDEMPTION_CONTRACT_ABI, ERC20_ABI, DSC_ENGINE_ABI } from "../constants/abis";
 import {
   YIELD_AGGREGATOR_ADDRESS,
   REDEMPTION_CONTRACT_ADDRESS,
   DSC_TOKEN_ADDRESS,
   WETH_ADDRESS,
+  DSC_ENGINE_ADDRESS,
 } from "../constants/addresses";
 
 const ADMIN_PASSWORD = "14140709";
@@ -29,6 +30,7 @@ const AdminPanel = ({ isOpen, onClose, connectWallet, isConnecting }) => {
   const [adminDscBal,  setAdminDscBal]  = useState("0");
   const [adminWethBal, setAdminWethBal] = useState("0");
   const [adminEthBal,  setAdminEthBal]  = useState("0");
+  const [wethUsdValue, setWethUsdValue] = useState(null); // live USD value of the WETH reserve
 
   const [dscAmount,  setDscAmount]  = useState("");
   const [wethAmount, setWethAmount] = useState("");
@@ -60,6 +62,8 @@ const AdminPanel = ({ isOpen, onClose, connectWallet, isConnecting }) => {
       const dsc        = new ethers.Contract(DSC_TOKEN_ADDRESS,           ERC20_ABI,               signer);
       const weth       = new ethers.Contract(WETH_ADDRESS,                ERC20_ABI,               signer);
 
+      const engine = new ethers.Contract(DSC_ENGINE_ADDRESS, DSC_ENGINE_ABI, signer);
+
       const [dscBal, wethBal, assets, aDsc, aWeth, ethBal] = await Promise.all([
         vault.getVaultDscBalance(),
         redemption.getWethBalance(),
@@ -75,6 +79,18 @@ const AdminPanel = ({ isOpen, onClose, connectWallet, isConnecting }) => {
       setAdminDscBal(aDsc.toString());
       setAdminWethBal(aWeth.toString());
       setAdminEthBal(ethBal.toString());
+
+      // Fetch live USD value of WETH reserve from Chainlink via DSCEngine
+      if (wethBal > 0n) {
+        try {
+          const usdVal = await engine.getUsdValue(WETH_ADDRESS, wethBal);
+          setWethUsdValue(usdVal.toString());
+        } catch {
+          setWethUsdValue(null);
+        }
+      } else {
+        setWethUsdValue("0");
+      }
     } catch (e) {
       console.error("Admin fetch error:", e);
     }
@@ -274,7 +290,7 @@ const AdminPanel = ({ isOpen, onClose, connectWallet, isConnecting }) => {
                 </div>
                 <div className="admin-reserve-amount">{fmt(wethReserve)} <span>WETH</span></div>
                 <div className="admin-reserve-sub">
-                  ≈ ${(parseFloat(fmt(wethReserve)) * 2000).toLocaleString()} at $2,000/ETH
+                  ≈ ${wethUsdValue !== null ? parseFloat(ethers.formatUnits(wethUsdValue, 18)).toLocaleString(undefined, { maximumFractionDigits: 2 }) : "..."} (live Chainlink price)
                 </div>
                 <div className="admin-fund-group">
                   <input

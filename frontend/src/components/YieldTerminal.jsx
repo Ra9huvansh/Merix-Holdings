@@ -1,10 +1,15 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { ethers } from "ethers";
 import { useDSCEngine } from "../hooks/useDSCEngine";
 import { useYieldAggregator } from "../hooks/useYieldAggregator";
+import { useWeb3 } from "../hooks/useWeb3";
 import { formatUnits } from "../utils/formatting";
+import { DSC_ENGINE_ABI } from "../constants/abis";
+import { DSC_ENGINE_ADDRESS, WETH_ADDRESS } from "../constants/addresses";
 
 const YieldTerminal = () => {
   const { accountInfo, fetchAccountInfo } = useDSCEngine();
+  const { signer } = useWeb3();
   const {
     loading,
     vaultInfo,
@@ -12,6 +17,7 @@ const YieldTerminal = () => {
     userStrategyDeposits,
     depositToStrategy,
     withdrawFromStrategy,
+    withdrawRemainingShares,
     redeemDscForWeth,
   } = useYieldAggregator();
 
@@ -20,6 +26,24 @@ const YieldTerminal = () => {
   const [inputAmount, setInputAmount] = useState("");
   const [txError, setTxError] = useState("");
   const [txSuccess, setTxSuccess] = useState("");
+  const [liveEthPrice, setLiveEthPrice] = useState(null); // USD price of 1 WETH (18-decimal bigint)
+
+  useEffect(() => {
+    const fetchEthPrice = async () => {
+      if (!signer || !DSC_ENGINE_ADDRESS || !WETH_ADDRESS) return;
+      try {
+        const engine = new ethers.Contract(DSC_ENGINE_ADDRESS, DSC_ENGINE_ABI, signer);
+        // getUsdValue(weth, 1e18) returns USD value of 1 WETH in 18-decimal wei
+        const price = await engine.getUsdValue(WETH_ADDRESS, ethers.parseUnits("1", 18));
+        setLiveEthPrice(price);
+      } catch (e) {
+        console.error("Failed to fetch live ETH price:", e);
+      }
+    };
+    fetchEthPrice();
+    const id = setInterval(fetchEthPrice, 30000);
+    return () => clearInterval(id);
+  }, [signer]);
 
   // ── Helpers ──────────────────────────────────────────────────────────────
 
@@ -60,17 +84,46 @@ const YieldTerminal = () => {
     return ((deposited * currentValue) / principal).toString();
   };
 
+  const getEthPriceDisplay = () => {
+    if (!liveEthPrice) return "Loading...";
+    return "$" + parseFloat(ethers.formatUnits(liveEthPrice, 18)).toLocaleString(undefined, { maximumFractionDigits: 2 }) + " / ETH";
+  };
+
   const getWethPreview = () => {
     const amt = parseFloat(inputAmount);
-    if (!amt || amt <= 0) return "0";
-    return (amt / 2000).toFixed(6);
+    if (!amt || amt <= 0 || !liveEthPrice || liveEthPrice === 0n) return "0";
+    // dscAmount (18 dec) / ethPriceUsd (18 dec) = wethOut (18 dec)
+    try {
+      const dscWei = ethers.parseUnits(inputAmount, 18);
+      const wethWei = (dscWei * ethers.parseUnits("1", 18)) / liveEthPrice;
+      return parseFloat(ethers.formatUnits(wethWei, 18)).toFixed(6);
+    } catch {
+      return "0";
+    }
+  };
+
+  const exceedsRealizedProfit = () => {
+    if (!inputAmount || parseFloat(inputAmount) <= 0) return false;
+    try {
+      const inputWei = ethers.parseUnits(inputAmount, 18);
+      const profitWei = BigInt(vaultInfo.realizedProfit || "0");
+      return inputWei > profitWei;
+    } catch {
+      return false;
+    }
   };
 
   // ── Modal helpers ─────────────────────────────────────────────────────────
 
-  const openModal = (type, strategyId = null, strategyName = null) => {
+  const openModal = (type, strategyId = null, strategyName = null, prefillWei = null) => {
     setModal({ type, strategyId, strategyName });
-    setInputAmount("");
+    // Pre-fill withdraw with current value (in DSC) so user fully exits in one tx
+    if (type === "withdraw" && prefillWei) {
+      const val = parseFloat(ethers.formatUnits(prefillWei, 18));
+      setInputAmount(isNaN(val) ? "" : val.toFixed(6));
+    } else {
+      setInputAmount("");
+    }
     setTxError("");
     setTxSuccess("");
   };
@@ -89,6 +142,10 @@ const YieldTerminal = () => {
     }
     setTxError("");
     setTxSuccess("");
+    if (modal.type === "redeem" && exceedsRealizedProfit()) {
+      setTxError(`Amount exceeds your realized profit (${fmt(vaultInfo.realizedProfit)} DSC)`);
+      return;
+    }
     try {
       if (modal.type === "deposit") {
         await depositToStrategy(modal.strategyId, inputAmount);
@@ -220,7 +277,7 @@ const YieldTerminal = () => {
                   </button>
                   <button
                     className="strat-btn withdraw-btn"
-                    onClick={() => openModal("withdraw", s.id, s.name)}
+                    onClick={() => openModal("withdraw", s.id, s.name, getStrategyCurrentValue(s.id))}
                     disabled={
                       !userStrategyDeposits[s.id] ||
                       userStrategyDeposits[s.id] === "0"
@@ -232,6 +289,30 @@ const YieldTerminal = () => {
               </div>
             ))}
           </div>
+
+          {/* Residual shares escape hatch */}
+          {BigInt(vaultInfo.userShares || "0") > 0n &&
+           userStrategyDeposits.every(d => !d || d === "0") && (
+            <div className="residual-banner">
+              <span>You have <strong>{fmt(vaultInfo.userShares)} yDSC</strong> residual shares with no strategy deposit. Withdraw them to recover your DSC.</span>
+              <button
+                className="strat-btn withdraw-btn"
+                onClick={async () => {
+                  setTxError("");
+                  setTxSuccess("");
+                  try {
+                    await withdrawRemainingShares();
+                    setTxSuccess("Residual shares withdrawn successfully");
+                  } catch (err) {
+                    setTxError(err.reason || err.message || "Transaction failed");
+                  }
+                }}
+                disabled={loading}
+              >
+                {loading ? "Processing..." : "Withdraw Residual Shares"}
+              </button>
+            </div>
+          )}
 
           <div className="vault-totals-bar">
             <div className="vault-total-item">
@@ -295,15 +376,15 @@ const YieldTerminal = () => {
             </p>
             <div className="info-box" style={{ marginBottom: "24px" }}>
               <div className="info-item">
-                <span>Simulated ETH Price</span>
-                <span>$2,000 / ETH</span>
-              </div>
-              <div className="info-item">
-                <span>Exchange Rate</span>
-                <span>2,000 DSC = 1 WETH collateral</span>
+                <span>Live ETH Price (Chainlink)</span>
+                <span>{getEthPriceDisplay()}</span>
               </div>
               <div className="info-item">
                 <span>Your Realized Profit</span>
+                <span>{fmt(vaultInfo.realizedProfit)} DSC</span>
+              </div>
+              <div className="info-item">
+                <span>Max Redeemable</span>
                 <span>{fmt(vaultInfo.realizedProfit)} DSC</span>
               </div>
             </div>
@@ -326,7 +407,7 @@ const YieldTerminal = () => {
 
             {modal.type === "redeem" && (
               <div className="modal-info">
-                DSC is burned. Equivalent WETH is deposited as collateral at $2,000/ETH.
+                DSC is burned. Equivalent WETH is deposited as collateral at {getEthPriceDisplay()} (live Chainlink price).
               </div>
             )}
 
@@ -349,6 +430,11 @@ const YieldTerminal = () => {
                 You will receive: <strong>{getWethPreview()} WETH</strong> as collateral
               </div>
             )}
+            {modal.type === "redeem" && exceedsRealizedProfit() && (
+              <div className="tx-error">
+                Exceeds your realized profit ({fmt(vaultInfo.realizedProfit)} DSC)
+              </div>
+            )}
 
             {txError && <div className="tx-error">{txError}</div>}
             {txSuccess && <div className="tx-success">{txSuccess}</div>}
@@ -357,7 +443,7 @@ const YieldTerminal = () => {
               <button
                 className="submit-button"
                 onClick={handleAction}
-                disabled={loading}
+                disabled={loading || (modal.type === "redeem" && exceedsRealizedProfit())}
               >
                 {loading
                   ? "Processing..."

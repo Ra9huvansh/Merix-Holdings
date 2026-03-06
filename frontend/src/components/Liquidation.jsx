@@ -96,14 +96,17 @@ const Liquidation = () => {
               width: "100%",
               borderCollapse: "collapse",
               fontSize: "0.8rem",
+              background: "rgba(0,0,0,0.3)",
+              borderRadius: "8px",
+              overflow: "hidden",
             }}>
               <thead>
-                <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
-                  <th style={{ textAlign: "left", padding: "0.5rem", color: "#9ca3af" }}>Address</th>
-                  <th style={{ textAlign: "right", padding: "0.5rem", color: "#9ca3af" }}>Collateral (USD)</th>
-                  <th style={{ textAlign: "right", padding: "0.5rem", color: "#9ca3af" }}>Debt (DSC)</th>
-                  <th style={{ textAlign: "right", padding: "0.5rem", color: "#9ca3af" }}>Health Factor</th>
-                  <th style={{ padding: "0.5rem" }}></th>
+                <tr style={{ background: "rgba(0,0,0,0.4)", borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
+                  <th style={{ textAlign: "left", padding: "0.6rem 0.75rem", color: "#9ca3af", fontWeight: 500 }}>Address</th>
+                  <th style={{ textAlign: "right", padding: "0.6rem 0.75rem", color: "#9ca3af", fontWeight: 500 }}>Collateral (USD)</th>
+                  <th style={{ textAlign: "right", padding: "0.6rem 0.75rem", color: "#9ca3af", fontWeight: 500 }}>Debt (DSC)</th>
+                  <th style={{ textAlign: "right", padding: "0.6rem 0.75rem", color: "#9ca3af", fontWeight: 500 }}>Health Factor</th>
+                  <th style={{ padding: "0.6rem 0.75rem" }}></th>
                 </tr>
               </thead>
               <tbody>
@@ -113,22 +116,25 @@ const Liquidation = () => {
                     style={{
                       borderBottom: "1px solid rgba(255,255,255,0.05)",
                       cursor: "pointer",
+                      background: "rgba(15,15,25,0.6)",
                     }}
+                    onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.05)"}
+                    onMouseLeave={e => e.currentTarget.style.background = "rgba(15,15,25,0.6)"}
                     onClick={() => handleSelectPosition(pos)}
                   >
-                    <td style={{ padding: "0.5rem", fontFamily: "monospace" }}>
+                    <td style={{ padding: "0.6rem 0.75rem", fontFamily: "monospace", color: "#e2e8f0" }}>
                       {formatAddress(pos.address)}
                     </td>
-                    <td style={{ padding: "0.5rem", textAlign: "right" }}>
+                    <td style={{ padding: "0.6rem 0.75rem", textAlign: "right", color: "#e2e8f0" }}>
                       {formatUSD(pos.collateralValueInUsd)}
                     </td>
-                    <td style={{ padding: "0.5rem", textAlign: "right" }}>
+                    <td style={{ padding: "0.6rem 0.75rem", textAlign: "right", color: "#e2e8f0" }}>
                       {parseFloat(ethers.formatUnits(pos.totalDscMinted, 18)).toFixed(4)} DSC
                     </td>
-                    <td style={{ padding: "0.5rem", textAlign: "right", color: "#ef4444", fontWeight: "bold" }}>
+                    <td style={{ padding: "0.6rem 0.75rem", textAlign: "right", color: "#ef4444", fontWeight: "bold" }}>
                       {formatHealthFactor(pos.healthFactor)}
                     </td>
-                    <td style={{ padding: "0.5rem" }}>
+                    <td style={{ padding: "0.6rem 0.75rem" }}>
                       <button
                         type="button"
                         className="submit-button danger"

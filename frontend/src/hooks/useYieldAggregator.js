@@ -143,6 +143,19 @@ export const useYieldAggregator = () => {
     }
   };
 
+  const withdrawRemainingShares = async () => {
+    if (!signer) throw new Error("Not connected");
+    setLoading(true);
+    try {
+      const vault = getVaultContract();
+      const tx = await vault.withdrawRemainingShares();
+      await tx.wait();
+      await fetchVaultInfo();
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // redeemDscForWeth does NOT call fetchAccountInfo here —
   // that is done in YieldTerminal after this resolves so both hooks refresh together.
   const redeemDscForWeth = async (dscAmount) => {
@@ -174,6 +187,7 @@ export const useYieldAggregator = () => {
     userStrategyDeposits,
     depositToStrategy,
     withdrawFromStrategy,
+    withdrawRemainingShares,
     redeemDscForWeth,
     fetchVaultInfo,
   };

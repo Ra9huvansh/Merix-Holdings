@@ -43,6 +43,8 @@ contract YieldAggregator is Ownable, ReentrancyGuard {
     mapping(address => uint256) public userPrincipal;   // DSC deposited (cost basis)
     mapping(address => uint256) public realizedProfit;  // Profit taken on withdrawals
 
+    address public redemptionContract;
+
     // Per-user per-strategy: DSC allocated to each strategy
     mapping(address => mapping(uint256 => uint256)) public userStrategyDeposited;
 
@@ -59,6 +61,8 @@ contract YieldAggregator is Ownable, ReentrancyGuard {
     error InsufficientShares();
     error NoStrategyDeposit();
     error InsufficientVaultLiquidity();
+    error NotRedemptionContract();
+    error InsufficientRealizedProfit();
 
     constructor(address dscAddress) Ownable(msg.sender) {
         dsc = IERC20(dscAddress);
@@ -149,6 +153,55 @@ contract YieldAggregator is Ownable, ReentrancyGuard {
         dsc.transfer(msg.sender, dscAmount);
 
         emit Withdrawn(msg.sender, strategyId, dscAmount, profit);
+    }
+
+    /**
+     * @notice Burn all remaining shares the caller holds and receive proportional DSC.
+     * @dev    Used when userStrategyDeposited is 0 but shares still exist (residual yield).
+     *         No per-strategy accounting is touched since those balances are already 0.
+     */
+    function withdrawRemainingShares() external nonReentrant {
+        uint256 sharesToBurn = userShares[msg.sender];
+        if (sharesToBurn == 0) revert InsufficientShares();
+
+        _harvestAll();
+
+        if (totalShares == 0 || totalAssets == 0) revert InsufficientShares();
+
+        uint256 dscOut = (sharesToBurn * totalAssets) / totalShares;
+
+        uint256 principalReduction = userPrincipal[msg.sender] < dscOut
+            ? userPrincipal[msg.sender]
+            : dscOut;
+        uint256 profit = dscOut > principalReduction ? dscOut - principalReduction : 0;
+
+        totalShares               -= sharesToBurn;
+        totalAssets               -= dscOut;
+        userShares[msg.sender]     = 0;
+        userPrincipal[msg.sender]  = 0;
+        realizedProfit[msg.sender] += profit;
+
+        if (dsc.balanceOf(address(this)) < dscOut) revert InsufficientVaultLiquidity();
+        dsc.transfer(msg.sender, dscOut);
+
+        emit Withdrawn(msg.sender, type(uint256).max, dscOut, profit);
+    }
+
+    /**
+     * @notice Owner sets the authorised RedemptionContract address.
+     */
+    function setRedemptionContract(address _redemptionContract) external onlyOwner {
+        redemptionContract = _redemptionContract;
+    }
+
+    /**
+     * @notice Called by RedemptionContract after a successful redemption to consume
+     *         the user's realized profit balance so it cannot be double-spent.
+     */
+    function deductRealizedProfit(address user, uint256 amount) external {
+        if (msg.sender != redemptionContract) revert NotRedemptionContract();
+        if (realizedProfit[user] < amount) revert InsufficientRealizedProfit();
+        realizedProfit[user] -= amount;
     }
 
     /**
