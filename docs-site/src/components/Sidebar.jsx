@@ -16,6 +16,7 @@ const nav = [
       { label: 'Health Factor', to: '/concepts/health-factor' },
       { label: 'Liquidation', to: '/concepts/liquidation' },
       { label: 'Yield Aggregator', to: '/concepts/yield' },
+      { label: 'Redemption Contract', to: '/concepts/redemption' },
     ],
   },
   {

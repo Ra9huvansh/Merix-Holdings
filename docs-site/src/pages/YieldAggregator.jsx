@@ -209,9 +209,9 @@ export default function YieldAggregator() {
           <span className="page-nav-direction">← Previous</span>
           <span className="page-nav-title">Liquidation</span>
         </Link>
-        <Link to="/reference/contracts" className="page-nav-link next">
+        <Link to="/concepts/redemption" className="page-nav-link next">
           <span className="page-nav-direction">Next</span>
-          <span className="page-nav-title">Smart Contracts →</span>
+          <span className="page-nav-title">Redemption Contract →</span>
         </Link>
       </div>
     </div>

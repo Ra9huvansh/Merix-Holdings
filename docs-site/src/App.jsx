@@ -9,6 +9,7 @@ import Collateral from './pages/Collateral'
 import HealthFactor from './pages/HealthFactor'
 import Liquidation from './pages/Liquidation'
 import YieldAggregator from './pages/YieldAggregator'
+import Redemption from './pages/Redemption'
 import Contracts from './pages/Contracts'
 import Security from './pages/Security'
 import FAQ from './pages/FAQ'
@@ -66,6 +67,7 @@ export default function App() {
               <Route path="/concepts/health-factor" element={<HealthFactor />} />
               <Route path="/concepts/liquidation" element={<Liquidation />} />
               <Route path="/concepts/yield" element={<YieldAggregator />} />
+              <Route path="/concepts/redemption" element={<Redemption />} />
               <Route path="/reference/contracts" element={<Contracts />} />
               <Route path="/reference/security" element={<Security />} />
               <Route path="/faq" element={<FAQ />} />
