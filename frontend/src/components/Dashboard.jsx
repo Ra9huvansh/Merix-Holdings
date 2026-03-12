@@ -92,7 +92,7 @@ const Dashboard = () => {
         <div className="stat-card">
           <div className="stat-label">DSC Balance</div>
           <div className="stat-value">
-            {parseFloat(formatUnits(dscBalance, 18)).toFixed(4)}
+            {parseFloat(formatUnits(dscBalance, 18)).toFixed(6)}
           </div>
         </div>
       </div>
