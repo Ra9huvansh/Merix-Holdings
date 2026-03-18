@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import AdminPanel from "./AdminPanel";
+import RiskTerminal from "./RiskTerminal/RiskTerminal";
 
 const LandingPage = ({ connectWallet, isConnecting }) => {
   const [scrollY, setScrollY] = useState(0);
@@ -7,6 +8,7 @@ const LandingPage = ({ connectWallet, isConnecting }) => {
   const canvasRef = useRef(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [adminOpen, setAdminOpen] = useState(false);
+  const [terminalOpen, setTerminalOpen] = useState(false);
   const dropdownRef = useRef(null);
 
   // Scroll reveal
@@ -79,6 +81,14 @@ const LandingPage = ({ connectWallet, isConnecting }) => {
     };
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  useEffect(() => {
+    const handleKey = (e) => {
+      if (e.key === "Escape") setTerminalOpen(false);
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
   }, []);
 
   const features = [
@@ -439,6 +449,83 @@ const LandingPage = ({ connectWallet, isConnecting }) => {
           </div>
         </div>
       </section>
+
+      {/* Risk Terminal Section */}
+      <section className="risk-terminal-section reveal">
+        <div className="section-container">
+          <div className="rt-section-inner">
+            <div className="rt-section-left">
+              <span className="rt-section-badge">▶ LIVE ON-CHAIN</span>
+              <h2 className="rt-section-title">Protocol Intelligence<br />Terminal</h2>
+              <p className="rt-section-desc">
+                Real-time risk surveillance across all protocol positions.
+                Monitor health factors, simulate liquidation cascades,
+                run historical backtests, and project price-driven liquidation timelines
+                — all from a single terminal.
+              </p>
+              <ul className="rt-feature-list">
+                <li><span className="rt-bullet">▸</span> Live position monitor with HF status</li>
+                <li><span className="rt-bullet">▸</span> Cascade liquidation simulator</li>
+                <li><span className="rt-bullet">▸</span> Chainlink price regression &amp; timeline</li>
+                <li><span className="rt-bullet">▸</span> Historical crash backtesting (2020–2022)</li>
+                <li><span className="rt-bullet">▸</span> Protocol stress score &amp; concentration risk</li>
+              </ul>
+              <button className="rt-launch-btn" onClick={() => setTerminalOpen(true)}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                  <path d="M4 17l6-6-6-6M12 19h8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                LAUNCH TERMINAL
+              </button>
+            </div>
+            <div className="rt-section-right">
+              <div className="rt-preview" onClick={() => setTerminalOpen(true)}>
+                <div className="rt-preview-bar">
+                  <span className="rt-preview-dot rt-dot-red" />
+                  <span className="rt-preview-dot rt-dot-amber" />
+                  <span className="rt-preview-dot rt-dot-green" />
+                  <span className="rt-preview-title">MERIX RISK INTELLIGENCE TERMINAL v1.0</span>
+                </div>
+                <div className="rt-preview-body">
+                  <div className="rt-preview-line rt-line-dim">&gt; INITIALIZING RISK TERMINAL v1.0</div>
+                  <div className="rt-preview-line rt-line-done">&gt; CONTRACTS INITIALIZED ✓</div>
+                  <div className="rt-preview-line rt-line-done">&gt; CHAINLINK FEEDS CONNECTED ✓</div>
+                  <div className="rt-preview-line rt-line-done">&gt; POSITIONS LOADED ✓</div>
+                  <div className="rt-preview-line rt-line-bright">&gt; BOOT COMPLETE — TERMINAL READY</div>
+                  <div className="rt-preview-spacer" />
+                  <div className="rt-preview-stat">
+                    <span className="rt-stat-k">ETH/USD</span>
+                    <span className="rt-stat-v rt-v-green">$2,199.76</span>
+                  </div>
+                  <div className="rt-preview-stat">
+                    <span className="rt-stat-k">STRESS SCORE</span>
+                    <span className="rt-stat-v rt-v-green">0 / 100</span>
+                  </div>
+                  <div className="rt-preview-stat">
+                    <span className="rt-stat-k">LIQUIDATABLE</span>
+                    <span className="rt-stat-v rt-v-green">0</span>
+                  </div>
+                  <div className="rt-preview-spacer" />
+                  <div className="rt-preview-line rt-line-dim">[ CLICK TO LAUNCH FULL TERMINAL ]</div>
+                  <div className="rt-cursor">█</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Risk Terminal Full-Screen Overlay */}
+      {terminalOpen && (
+        <div className="rt-overlay">
+          <button className="rt-overlay-close" onClick={() => setTerminalOpen(false)}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+            </svg>
+            ESC / CLOSE
+          </button>
+          <RiskTerminal />
+        </div>
+      )}
 
       {/* Global Market Strip */}
       <section className="market-strip-section">
