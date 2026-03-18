@@ -41,11 +41,6 @@ export const useDSCEngine = () => {
         engine.getCollateralTokens(),
       ]);
 
-      // Debug: Log token addresses
-      console.log("Contract collateral tokens:", tokens);
-      console.log("WETH_ADDRESS from .env:", WETH_ADDRESS);
-      console.log("WBTC_ADDRESS from .env:", WBTC_ADDRESS);
-
       const collateralBalances = {};
       for (const token of tokens) {
         const balance = await engine.getCollateralBalanceOfUser(token, account);
@@ -87,16 +82,13 @@ export const useDSCEngine = () => {
           try {
             const balance = await tokenContract.balanceOf(account);
             balances[tokenLower] = balance.toString();
-            console.log(`Balance for ${token} (${tokenLower}):`, balance.toString());
           } catch (error) {
-            console.error(`Error fetching balance for ${token}:`, error);
             // Don't overwrite if we already have a balance from contract tokens
             if (!balances[tokenLower]) {
               balances[tokenLower] = "0";
             }
           }
         } else {
-          console.warn(`Could not create token contract for ${token}`);
         }
       }
       

@@ -11,6 +11,7 @@ const TransactionVerifier = () => {
   const [error, setError] = useState(null);
   const [functionSelector, setFunctionSelector] = useState(null);
   const [resolvedSignature, setResolvedSignature] = useState(null);
+  const [analysisMode, setAnalysisMode] = useState(null);
 
   // Extract function selector from calldata (first 4 bytes)
   const extractFunctionSelector = (calldata) => {
@@ -137,7 +138,7 @@ You MUST respond with ONLY a valid JSON object, no other text:
     // 1. Try local Ollama first
     const ollamaModel = import.meta.env.VITE_OLLAMA_MODEL || "qwen2.5:14b";
     try {
-      return await callLLM(
+      const result = await callLLM(
         "http://localhost:11434/v1/chat/completions",
         ollamaModel,
         {},
@@ -145,15 +146,17 @@ You MUST respond with ONLY a valid JSON object, no other text:
         signature,
         calldata
       );
-    } catch (err) {
-      console.warn("Ollama unavailable:", err.message);
+      setAnalysisMode("AI (Ollama)");
+      return result;
+    } catch {
+      // Ollama unavailable, try next
     }
 
     // 2. Fall back to Groq if key is configured
     const groqKey = import.meta.env.VITE_GROQ_API_KEY;
     if (groqKey) {
       try {
-        return await callLLM(
+        const result = await callLLM(
           "https://api.groq.com/openai/v1/chat/completions",
           "llama-3.3-70b-versatile",
           { Authorization: `Bearer ${groqKey}` },
@@ -161,12 +164,15 @@ You MUST respond with ONLY a valid JSON object, no other text:
           signature,
           calldata
         );
-      } catch (err) {
-        console.warn("Groq fallback failed:", err.message);
+        setAnalysisMode("AI (Groq)");
+        return result;
+      } catch {
+        // Groq failed, fall through to heuristic
       }
     }
 
     // 3. Last resort: heuristic
+    setAnalysisMode("Heuristic (no AI available)");
     return analyzeHeuristically(selector);
   };
 
@@ -211,6 +217,7 @@ You MUST respond with ONLY a valid JSON object, no other text:
     setResult(null);
     setFunctionSelector(null);
     setResolvedSignature(null);
+    setAnalysisMode(null);
 
     try {
       let calldata = input.trim();
@@ -386,9 +393,9 @@ You MUST respond with ONLY a valid JSON object, no other text:
                   >
                     {result.risk.toUpperCase()} RISK
                   </span>
-                  <span 
+                  <span
                     className="verifier-safe-badge"
-                    style={{ 
+                    style={{
                       background: result.safe ? "rgba(16, 185, 129, 0.2)" : "rgba(239, 68, 68, 0.2)",
                       color: result.safe ? "#10b981" : "#ef4444",
                       borderColor: result.safe ? "#10b981" : "#ef4444"
@@ -396,6 +403,19 @@ You MUST respond with ONLY a valid JSON object, no other text:
                   >
                     {result.safe ? "✓ VERIFIED SAFE" : "⚠️ CAUTION REQUIRED"}
                   </span>
+                  {analysisMode && (
+                    <span
+                      className="verifier-safe-badge"
+                      style={{
+                        background: "rgba(107, 114, 128, 0.2)",
+                        color: "#9ca3af",
+                        borderColor: "#4b5563",
+                        fontSize: "0.7rem",
+                      }}
+                    >
+                      {analysisMode}
+                    </span>
+                  )}
                 </div>
               </div>
             </div>

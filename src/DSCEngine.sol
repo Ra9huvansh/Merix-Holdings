@@ -23,14 +23,13 @@
 // private
 // view & pure functions
 
-pragma solidity ^0.8.18;
+pragma solidity ^0.8.19;
 
 import {DecentralizedStableCoin} from "./DecentralizedStableCoin.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
-import {console} from "forge-std/Test.sol";
 import {OracleLib} from "./libraries/OracleLib.sol";
 
 /**

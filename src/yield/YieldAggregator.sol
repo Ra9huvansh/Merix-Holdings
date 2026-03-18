@@ -227,12 +227,12 @@ contract YieldAggregator is Ownable, ReentrancyGuard {
 
     function _harvestStrategy(uint256 id) internal returns (uint256 yieldAmount) {
         Strategy storage s = strategies[id];
-        if (s.totalDeposited == 0) return 0;
         uint256 elapsed = block.timestamp - s.lastHarvestTime;
+        s.lastHarvestTime = block.timestamp; // Always reset — prevents stale time accumulating on empty strategies
+        if (s.totalDeposited == 0 || elapsed == 0) return 0;
         yieldAmount = (s.totalDeposited * s.apyBps * elapsed) / (365 days * 10_000);
-        s.accruedYield    += yieldAmount;
-        s.lastHarvestTime  = block.timestamp;
-        totalAssets       += yieldAmount;
+        s.accruedYield += yieldAmount;
+        totalAssets    += yieldAmount;
     }
 
     /*//////////////////////////////////////////////////////////////

@@ -15,32 +15,32 @@ export default function Contracts() {
       <div className="address-row">
         <span className="address-label">DSCEngine</span>
         <span className="address-value">
-          <a href="https://sepolia.etherscan.io/address/0xfd4aDeDA26D812f30328177cBe8f70C3A53547B3" target="_blank" rel="noopener noreferrer">
-            0xfd4aDeDA26D812f30328177cBe8f70C3A53547B3
+          <a href="https://sepolia.etherscan.io/address/0x9E1D25C37bf92AC2353df4802E123f7D070f4931" target="_blank" rel="noopener noreferrer">
+            0x9E1D25C37bf92AC2353df4802E123f7D070f4931
           </a>
         </span>
       </div>
       <div className="address-row">
         <span className="address-label">DecentralizedStableCoin</span>
         <span className="address-value">
-          <a href="https://sepolia.etherscan.io/address/0xc1e231e7A88348821Ab534c9A080392706F71585" target="_blank" rel="noopener noreferrer">
-            0xc1e231e7A88348821Ab534c9A080392706F71585
+          <a href="https://sepolia.etherscan.io/address/0x467C5F2153c11feC84A60ea45b28a19F47DA0b15" target="_blank" rel="noopener noreferrer">
+            0x467C5F2153c11feC84A60ea45b28a19F47DA0b15
           </a>
         </span>
       </div>
       <div className="address-row">
         <span className="address-label">YieldAggregator</span>
         <span className="address-value">
-          <a href="https://sepolia.etherscan.io/address/0xdd6F63a4981E898289f4420e0c3070FAb7eE9b7B" target="_blank" rel="noopener noreferrer">
-            0xdd6F63a4981E898289f4420e0c3070FAb7eE9b7B
+          <a href="https://sepolia.etherscan.io/address/0x088025Beb69c5691145c8d6DC43138eF8C4A4d41" target="_blank" rel="noopener noreferrer">
+            0x088025Beb69c5691145c8d6DC43138eF8C4A4d41
           </a>
         </span>
       </div>
       <div className="address-row">
         <span className="address-label">RedemptionContract</span>
         <span className="address-value">
-          <a href="https://sepolia.etherscan.io/address/0xC6C011ad96CA0fA9c12CFFf6bfb9508B9Ea2F55e" target="_blank" rel="noopener noreferrer">
-            0xC6C011ad96CA0fA9c12CFFf6bfb9508B9Ea2F55e
+          <a href="https://sepolia.etherscan.io/address/0xFe35219450b891dcb01EcADC59A0e4aD044295f2" target="_blank" rel="noopener noreferrer">
+            0xFe35219450b891dcb01EcADC59A0e4aD044295f2
           </a>
         </span>
       </div>

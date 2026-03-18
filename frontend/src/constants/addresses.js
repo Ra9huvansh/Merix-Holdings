@@ -6,6 +6,24 @@ export const CHAIN_ID = parseInt(import.meta.env.VITE_CHAIN_ID || "31337");
 export const YIELD_AGGREGATOR_ADDRESS = import.meta.env.VITE_YIELD_AGGREGATOR_ADDRESS || "";
 export const REDEMPTION_CONTRACT_ADDRESS = import.meta.env.VITE_REDEMPTION_CONTRACT_ADDRESS || "";
 
+const REQUIRED_ADDRESSES = {
+  VITE_DSC_ENGINE_ADDRESS: DSC_ENGINE_ADDRESS,
+  VITE_DSC_TOKEN_ADDRESS: DSC_TOKEN_ADDRESS,
+  VITE_WETH_ADDRESS: WETH_ADDRESS,
+  VITE_WBTC_ADDRESS: WBTC_ADDRESS,
+};
+
+const missing = Object.entries(REQUIRED_ADDRESSES)
+  .filter(([, v]) => !v)
+  .map(([k]) => k);
+
+if (missing.length > 0) {
+  console.error(
+    `[Config] Missing required environment variables: ${missing.join(", ")}. ` +
+    "Check your frontend/.env file."
+  );
+}
+
 export const TOKEN_INFO = {
   [WETH_ADDRESS.toLowerCase()]: {
     name: "WETH",
@@ -18,4 +36,3 @@ export const TOKEN_INFO = {
     decimals: 18
   }
 };
-

@@ -140,8 +140,8 @@ export default function Redemption() {
       <div className="address-row">
         <span className="address-label">RedemptionContract</span>
         <span className="address-value">
-          <a href="https://sepolia.etherscan.io/address/0xC6C011ad96CA0fA9c12CFFf6bfb9508B9Ea2F55e" target="_blank" rel="noopener noreferrer">
-            0xC6C011ad96CA0fA9c12CFFf6bfb9508B9Ea2F55e
+          <a href="https://sepolia.etherscan.io/address/0xFe35219450b891dcb01EcADC59A0e4aD044295f2" target="_blank" rel="noopener noreferrer">
+            0xFe35219450b891dcb01EcADC59A0e4aD044295f2
           </a>
         </span>
       </div>
