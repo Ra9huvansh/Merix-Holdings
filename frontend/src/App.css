@@ -4020,16 +4020,21 @@ select.form-input option:focus {
   flex-direction: column;
 }
 
+/* Close button sits in its own bar above the terminal — never overlaps content */
+.rt-overlay-close-bar {
+  display: flex;
+  justify-content: flex-end;
+  padding: 8px 12px;
+  flex-shrink: 0;
+  background: #000;
+}
+
 .rt-overlay-close {
-  position: fixed;
-  top: 16px;
-  right: 20px;
-  z-index: 10000;
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 16px;
-  background: rgba(0, 0, 0, 0.85);
+  padding: 6px 14px;
+  background: transparent;
   border: 1px solid rgba(0, 255, 65, 0.3);
   color: rgba(0, 255, 65, 0.7);
   font-family: "Courier New", monospace;

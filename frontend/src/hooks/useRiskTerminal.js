@@ -8,6 +8,7 @@ import {
   CHAINLINK_HISTORY_ROUNDS,
   BLOCK_POLL_INTERVAL,
   PRICE_POLL_INTERVAL,
+  PRICE_TICK_INTERVAL,
   STRESS_WEIGHT_HF_RATIO,
   STRESS_WEIGHT_VELOCITY,
   STRESS_WEIGHT_CONCENTRATION,
@@ -138,21 +139,20 @@ function linearRegression(rounds) {
 // COMPUTE HF AT GIVEN PRICES (for simulation)
 // ─────────────────────────────────────────────
 
-function computeHFAtPrice(pos, ethPriceUsd, wbtcPriceUsd) {
+function computeHFAtPrice(pos, ethPriceUsd, wbtcPriceUsd, liqThresholdPct = 50) {
   const wethVal = (Number(pos.wethBalance) / 1e18) * ethPriceUsd;
   const wbtcVal = (Number(pos.wbtcBalance) / 1e18) * wbtcPriceUsd;
   const totalCollateral = wethVal + wbtcVal;
   const dscMinted = Number(pos.totalDscMinted) / 1e18;
   if (dscMinted === 0) return Infinity;
-  // DSCEngine: liquidation threshold 50% → HF = (collateral * 0.5) / dscMinted
-  return (totalCollateral * 0.5) / dscMinted;
+  return (totalCollateral * (liqThresholdPct / 100)) / dscMinted;
 }
 
 // ─────────────────────────────────────────────
 // CASCADE SIMULATION
 // ─────────────────────────────────────────────
 
-function runCascadeSimulation(dropPercent, positions, currentEthPrice, wbtcPriceUsd) {
+function runCascadeSimulation(dropPercent, positions, currentEthPrice, wbtcPriceUsd, liqThresholdPct = 50) {
   const simPositions = positions
     .filter((p) => p.totalDscMinted > 0n)
     .map((p) => ({ ...p, alive: true }));
@@ -167,7 +167,7 @@ function runCascadeSimulation(dropPercent, positions, currentEthPrice, wbtcPrice
     const newLiqs = [];
     for (const pos of simPositions) {
       if (!pos.alive) continue;
-      const hf = computeHFAtPrice(pos, ethPrice, wbtcPriceUsd);
+      const hf = computeHFAtPrice(pos, ethPrice, wbtcPriceUsd, liqThresholdPct);
       if (hf < 1.0) {
         pos.alive = false;
         const dsc = Number(pos.totalDscMinted) / 1e18;
@@ -220,7 +220,7 @@ function runCascadeSimulation(dropPercent, positions, currentEthPrice, wbtcPrice
 // BACKTEST
 // ─────────────────────────────────────────────
 
-function runBacktest(scenarioId, positions, currentEthPrice, wbtcPriceUsd) {
+function runBacktest(scenarioId, positions, currentEthPrice, wbtcPriceUsd, liqThresholdPct = 50) {
   const scenario = BACKTEST_SCENARIOS.find((s) => s.id === scenarioId);
   if (!scenario) return null;
 
@@ -228,7 +228,7 @@ function runBacktest(scenarioId, positions, currentEthPrice, wbtcPriceUsd) {
   const active = positions.filter((p) => p.totalDscMinted > 0n);
 
   const rows = active.map((pos) => {
-    const hf = computeHFAtPrice(pos, crashEthPrice, wbtcPriceUsd);
+    const hf = computeHFAtPrice(pos, crashEthPrice, wbtcPriceUsd, liqThresholdPct);
     return {
       address: pos.address,
       survived: hf >= 1.0,
@@ -263,25 +263,65 @@ export const useRiskTerminal = () => {
   const engineRef    = useRef(null);
   const chainlinkRef = useRef(null);
   const lastBlockRef = useRef(0);
-  const posIntervalRef   = useRef(null);
-  const priceIntervalRef = useRef(null);
+  const posIntervalRef     = useRef(null);
+  const priceIntervalRef   = useRef(null);
+  const priceTickRef       = useRef(null);
+  const binanceWsRef       = useRef(null);
+  // Refs keep volatile values current inside setInterval closures without stale captures
+  const chainlinkRoundsRef = useRef([]);
+  const wbtcPriceRef        = useRef(0);
 
-  const [isBooting,    setIsBooting]    = useState(true);
-  const [bootProgress, setBootProgress] = useState(0);
-  const [bootLog,      setBootLog]      = useState([]);
-  const [error,        setError]        = useState(null);
+  const [isBooting,           setIsBooting]           = useState(true);
+  const [bootProgress,        setBootProgress]        = useState(0);
+  const [bootLog,             setBootLog]             = useState([]);
+  const [error,               setError]               = useState(null);
+  const [refreshError,        setRefreshError]        = useState(null);
+  const [wbtcPriceError,      setWbtcPriceError]      = useState(false);
 
-  const [depositorAddresses, setDepositorAddresses] = useState([]);
-  const [positions,          setPositions]          = useState([]);
-  const [chainlinkRounds,    setChainlinkRounds]    = useState([]);
-  const [currentEthPrice,    setCurrentEthPrice]    = useState(null);
-  const [wbtcPriceUsd,       setWbtcPriceUsd]       = useState(0);
-  const [stressScore,        setStressScore]        = useState(0);
-  const [stressHistory,      setStressHistory]      = useState([]);
-  const [concentrationData,  setConcentrationData]  = useState([]);
-  const [isWhaleAlert,       setIsWhaleAlert]       = useState(false);
-  const [lastRefreshedAt,    setLastRefreshedAt]    = useState(null);
-  const [blockNumber,        setBlockNumber]        = useState(null);
+  const [depositorAddresses,  setDepositorAddresses]  = useState([]);
+  const [positions,           setPositions]           = useState([]);
+  const [chainlinkRounds,     setChainlinkRounds]     = useState([]);
+  const [currentEthPrice,     setCurrentEthPrice]     = useState(null);
+  const [liveEthPrice,        setLiveEthPrice]        = useState(null); // Binance stream, display only
+  const [wbtcPriceUsd,        setWbtcPriceUsd]        = useState(0);
+  const [liquidationThreshold, setLiquidationThreshold] = useState(50);
+  const [stressScore,         setStressScore]         = useState(0);
+  const [stressHistory,       setStressHistory]       = useState([]);
+  const [concentrationData,   setConcentrationData]   = useState([]);
+  const [isWhaleAlert,        setIsWhaleAlert]        = useState(false);
+  const [lastRefreshedAt,     setLastRefreshedAt]     = useState(null);
+  const [blockNumber,         setBlockNumber]         = useState(null);
+
+  // ── Binance WebSocket — live ETH/USD price, ~1s updates
+  // Feeds both liveEthPrice (display) and currentEthPrice (calculations) so
+  // cascade sim, backtest, regression all stay in sync with the real-time price.
+  useEffect(() => {
+    const connect = () => {
+      const ws = new WebSocket("wss://stream.binance.com:9443/ws/ethusdt@miniTicker");
+      binanceWsRef.current = ws;
+
+      ws.onmessage = (e) => {
+        const msg = JSON.parse(e.data);
+        if (msg.c) {
+          const price = parseFloat(msg.c);
+          setLiveEthPrice(price);
+          setCurrentEthPrice(price);
+        }
+      };
+
+      ws.onclose = () => {
+        setTimeout(() => {
+          if (binanceWsRef.current?.readyState !== WebSocket.OPEN) connect();
+        }, 3000);
+      };
+    };
+
+    connect();
+    return () => {
+      const ws = binanceWsRef.current;
+      if (ws) { ws.onclose = null; ws.close(); }
+    };
+  }, []);
 
   const log = useCallback((msg, state = "active") => {
     setBootLog((prev) => {
@@ -402,8 +442,13 @@ export const useRiskTerminal = () => {
           toBlock
         );
         events.forEach((e) => unique.add(e.args.user.toLowerCase()));
-      } catch {
-        // throttled — wait and retry chunk
+      } catch (err) {
+        // Only retry on RPC rate-limit errors; re-throw on permanent failures
+        const msg = err?.message?.toLowerCase() || "";
+        const isThrottle =
+          msg.includes("rate") || msg.includes("limit") ||
+          msg.includes("429") || err?.code === -32005;
+        if (!isThrottle) throw err;
         await new Promise((r) => setTimeout(r, 1000));
         continue;
       }
@@ -444,21 +489,24 @@ export const useRiskTerminal = () => {
 
       const pos = await fetchPositions(addresses);
       setPositions(pos);
+      setRefreshError(null);
       return pos;
-    } catch {
+    } catch (err) {
+      setRefreshError(`Position refresh failed: ${err.message}`);
       return null;
     }
   }, [fetchPositions]);
 
   // ── Main refresh (prices + positions + derived)
-  const refresh = useCallback(async (addresses, existingRounds) => {
+  const refresh = useCallback(async (addresses) => {
     try {
       // Fetch latest price
       const latest = await chainlinkRef.current.latestRoundData();
       const ethPrice = Number(latest.answer) / 1e8;
       setCurrentEthPrice(ethPrice);
 
-      // Prepend new round if it's different
+      // Prepend new round if it's different from the last known one
+      const existingRounds = chainlinkRoundsRef.current;
       const newRound = {
         roundId:  latest.roundId,
         answer:   latest.answer,
@@ -470,6 +518,7 @@ export const useRiskTerminal = () => {
       if (!rounds[0] || rounds[0].roundId !== newRound.roundId) {
         rounds = [newRound, ...existingRounds].slice(0, CHAINLINK_HISTORY_ROUNDS);
         setChainlinkRounds(rounds);
+        chainlinkRoundsRef.current = rounds;
       }
 
       // Refresh positions
@@ -485,7 +534,12 @@ export const useRiskTerminal = () => {
         );
         wbtcPrice = Number(wbtcVal) / 1e18;
         setWbtcPriceUsd(wbtcPrice);
-      } catch {}
+        wbtcPriceRef.current = wbtcPrice;
+        setWbtcPriceError(false);
+      } catch (err) {
+        setWbtcPriceError(true);
+        console.warn("WBTC price fetch failed:", err.message);
+      }
 
       // Derived
       const { data: concData, isWhale } = computeConcentration(pos, ethPrice, wbtcPrice);
@@ -499,7 +553,10 @@ export const useRiskTerminal = () => {
       );
 
       setLastRefreshedAt(new Date());
-    } catch {}
+      setRefreshError(null);
+    } catch (err) {
+      setRefreshError(`Price refresh failed: ${err.message}`);
+    }
   }, [refreshPositions, computeConcentration, wbtcPriceUsd]);
 
   // ── BOOT SEQUENCE
@@ -544,8 +601,21 @@ export const useRiskTerminal = () => {
         const rounds = await fetchChainlinkHistory();
         if (cancelled) return;
         setChainlinkRounds(rounds);
+        chainlinkRoundsRef.current = rounds;
         const ethPrice = rounds[0]?.priceUsd || 0;
         setCurrentEthPrice(ethPrice);
+        setBootProgress(75);
+
+        // Fetch liquidation threshold dynamically from DSCEngine
+        let liqThreshold = 50;
+        try {
+          const raw = await engine.getLiquidationThreshold();
+          liqThreshold = Number(raw);
+          setLiquidationThreshold(liqThreshold);
+          log(`LIQUIDATION THRESHOLD: ${liqThreshold}%`);
+        } catch {
+          log("LIQUIDATION THRESHOLD: DEFAULT 50% (ON-CHAIN FETCH FAILED)");
+        }
         setBootProgress(80);
 
         // WBTC price
@@ -554,7 +624,13 @@ export const useRiskTerminal = () => {
           const wbtcVal = await engine.getUsdValue(WBTC_ADDRESS, ethers.parseUnits("1", 18));
           wbtcPrice = Number(wbtcVal) / 1e18;
           setWbtcPriceUsd(wbtcPrice);
-        } catch {}
+          wbtcPriceRef.current = wbtcPrice;
+          setWbtcPriceError(false);
+        } catch (err) {
+          setWbtcPriceError(true);
+          console.warn("WBTC price boot fetch failed:", err.message);
+          log("WBTC PRICE: UNAVAILABLE (ORACLE ERROR) — WBTC CALCULATIONS DEGRADED");
+        }
 
         // Derived
         log("COMPUTING STRESS METRICS...");
@@ -573,24 +649,24 @@ export const useRiskTerminal = () => {
         if (cancelled) return;
         setIsBooting(false);
 
-        // Start polling intervals
-        const addrs = addresses; // capture for closures
-        let latestRounds = rounds;
+        // Start polling intervals — use ref for rounds to avoid stale closures
+        const addrs = addresses;
 
         posIntervalRef.current = setInterval(async () => {
           const updated = await refreshPositions(addrs);
           if (updated) {
-            const { data: c, isWhale: w } = computeConcentration(updated, ethPrice, wbtcPrice);
+            const ethPriceNow  = chainlinkRoundsRef.current[0]?.priceUsd || ethPrice;
+            const wbtcPriceNow = wbtcPriceRef.current;
+            const { data: c, isWhale: w } = computeConcentration(updated, ethPriceNow, wbtcPriceNow);
             setConcentrationData(c);
             setIsWhaleAlert(w);
           }
         }, BLOCK_POLL_INTERVAL);
 
         priceIntervalRef.current = setInterval(async () => {
-          await refresh(addrs, latestRounds);
-          // update local snapshot for closure
-          setChainlinkRounds((r) => { latestRounds = r; return r; });
+          await refresh(addrs);
         }, PRICE_POLL_INTERVAL);
+
 
       } catch (err) {
         if (!cancelled) {
@@ -611,19 +687,19 @@ export const useRiskTerminal = () => {
 
   // ── PUBLIC ACTIONS
   const refreshNow = useCallback(async () => {
-    await refresh(depositorAddresses, chainlinkRounds);
-  }, [refresh, depositorAddresses, chainlinkRounds]);
+    await refresh(depositorAddresses);
+  }, [refresh, depositorAddresses]);
 
   const runCascade = useCallback(
     (dropPercent) =>
-      runCascadeSimulation(dropPercent, positions, currentEthPrice || 0, wbtcPriceUsd),
-    [positions, currentEthPrice, wbtcPriceUsd]
+      runCascadeSimulation(dropPercent, positions, currentEthPrice || 0, wbtcPriceUsd, liquidationThreshold),
+    [positions, currentEthPrice, wbtcPriceUsd, liquidationThreshold]
   );
 
   const runBacktestFn = useCallback(
     (scenarioId) =>
-      runBacktest(scenarioId, positions, currentEthPrice || 0, wbtcPriceUsd),
-    [positions, currentEthPrice, wbtcPriceUsd]
+      runBacktest(scenarioId, positions, currentEthPrice || 0, wbtcPriceUsd, liquidationThreshold),
+    [positions, currentEthPrice, wbtcPriceUsd, liquidationThreshold]
   );
 
   const runRegressionFn = useCallback(() => {
@@ -640,7 +716,7 @@ export const useRiskTerminal = () => {
       const atRisk = positions.filter(
         (p) =>
           p.totalDscMinted > 0n &&
-          computeHFAtPrice(p, projPrice, wbtcPriceUsd) < 1.0
+          computeHFAtPrice(p, projPrice, wbtcPriceUsd, liquidationThreshold) < 1.0
       ).length;
       return {
         step,
@@ -652,7 +728,7 @@ export const useRiskTerminal = () => {
     });
 
     return { slope, intercept, rSquared, projections };
-  }, [chainlinkRounds, positions, wbtcPriceUsd]);
+  }, [chainlinkRounds, positions, wbtcPriceUsd, liquidationThreshold]);
 
   return {
     // State
@@ -660,11 +736,15 @@ export const useRiskTerminal = () => {
     bootProgress,
     bootLog,
     error,
+    refreshError,
+    wbtcPriceError,
     depositorAddresses,
     positions,
     chainlinkRounds,
     currentEthPrice,
+    liveEthPrice,
     wbtcPriceUsd,
+    liquidationThreshold,
     stressScore,
     stressHistory,
     concentrationData,

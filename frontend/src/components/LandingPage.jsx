@@ -517,12 +517,14 @@ const LandingPage = ({ connectWallet, isConnecting }) => {
       {/* Risk Terminal Full-Screen Overlay */}
       {terminalOpen && (
         <div className="rt-overlay">
-          <button className="rt-overlay-close" onClick={() => setTerminalOpen(false)}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-              <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-            </svg>
-            ESC / CLOSE
-          </button>
+          <div className="rt-overlay-close-bar">
+            <button className="rt-overlay-close" onClick={() => setTerminalOpen(false)}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+              </svg>
+              ESC / CLOSE
+            </button>
+          </div>
           <RiskTerminal />
         </div>
       )}

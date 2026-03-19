@@ -38,7 +38,12 @@ export default function StressScore({
 
   const hfRatioA = active.length > 0 ? (atRisk.length / active.length) * 100 : 0;
   const velocityB = Math.min(100, Math.max(0, (-pctChange / 20) * 100));
-  const concC = Math.min(100, ((top3Pct / 100) ** 2 / 0.25) * 100);
+  // Use HHI (same formula as the hook) so the displayed breakdown matches the actual score
+  const totalValue = concentrationData.reduce((s, d) => s + d.totalValueUsd, 0);
+  const HHI = totalValue > 0
+    ? concentrationData.reduce((s, d) => s + (d.totalValueUsd / totalValue) ** 2, 0)
+    : 0;
+  const concC = Math.min(100, (HHI / 0.25) * 100);
 
   const sparkData = stressHistory.map((h) => h.score);
 

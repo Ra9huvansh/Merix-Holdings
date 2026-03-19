@@ -42,7 +42,14 @@ const BootScreen = ({ bootLog, bootProgress }) => (
 // ── Main terminal ─────────────────────────────────────────────
 export default function RiskTerminal() {
   const [activePanel, setActivePanel] = useState("positions");
+  const [now, setNow] = useState(() => new Date());
   const data = useRiskTerminal();
+
+  // Live clock — ticks every second
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(id);
+  }, []);
 
   // Keyboard shortcuts 1–6, R to refresh
   useEffect(() => {
@@ -91,7 +98,9 @@ export default function RiskTerminal() {
           ▶ MERIX RISK INTELLIGENCE TERMINAL v1.0
         </span>
         <span className="t-header-meta">
-          ETH <span style={{ color: "#00ff41" }}>${data.currentEthPrice?.toFixed(2) || "—"}</span>
+          ETH <span style={{ color: "#00ff41" }}>
+            ${(data.liveEthPrice ?? data.currentEthPrice)?.toFixed(2) ?? "—"}
+          </span>
           &nbsp;|&nbsp;
           POSITIONS: {data.positions.length}
           &nbsp;|&nbsp;
@@ -105,7 +114,9 @@ export default function RiskTerminal() {
           &nbsp;|&nbsp;
           BLOCK: {data.blockNumber || "—"}
           &nbsp;|&nbsp;
-          {data.lastRefreshedAt?.toLocaleTimeString() || "--:--:--"}
+          <span style={{ color: "#00ff41" }}>{now.toLocaleTimeString()}</span>
+          &nbsp;|&nbsp;
+          UPD: {data.lastRefreshedAt?.toLocaleTimeString() || "--:--:--"}
         </span>
       </div>
 
@@ -129,6 +140,18 @@ export default function RiskTerminal() {
           [R] REFRESH
         </button>
       </div>
+
+      {/* Non-fatal warning banners */}
+      {data.wbtcPriceError && (
+        <div className="t-error" style={{ fontSize: 11, padding: "6px 12px", marginBottom: 4 }}>
+          !! WBTC ORACLE UNAVAILABLE — WBTC COLLATERAL VALUED AT $0. CASCADE/BACKTEST RESULTS MAY BE INACCURATE.
+        </div>
+      )}
+      {data.refreshError && (
+        <div className="t-error" style={{ fontSize: 11, padding: "6px 12px", marginBottom: 4 }}>
+          !! {data.refreshError}
+        </div>
+      )}
 
       {/* Panel content */}
       <div className="t-panel-content">

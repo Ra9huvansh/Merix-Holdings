@@ -8,10 +8,12 @@ const fmt = (ts) => {
 };
 
 export default function LiquidationTimeline({ chainlinkRounds, runRegression, positions }) {
+  // runRegression is a useCallback that closes over chainlinkRounds, positions, wbtcPriceUsd —
+  // so it updates whenever those change, and this memo re-runs correctly with just [runRegression].
   const regression = useMemo(() => {
     if (typeof runRegression === "function") return runRegression();
     return null;
-  }, [runRegression, chainlinkRounds, positions]); // eslint-disable-line
+  }, [runRegression]);
 
   const priceHistory = chainlinkRounds.map((r) => r.priceUsd);
 

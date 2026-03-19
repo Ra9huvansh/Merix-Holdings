@@ -37,6 +37,7 @@ export const HF_DANGER  = 1.0;
 // Polling intervals (ms)
 export const BLOCK_POLL_INTERVAL = 12000;
 export const PRICE_POLL_INTERVAL = 30000;
+export const PRICE_TICK_INTERVAL = 10000; // fast ETH price tick (Chainlink latestRoundData only)
 
 // How many Chainlink rounds to fetch for regression
 export const CHAINLINK_HISTORY_ROUNDS = 20;
