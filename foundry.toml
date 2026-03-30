@@ -16,6 +16,12 @@ remappings = [
     '@openzeppelin/contracts=lib/openzeppelin-contracts/contracts',
 ]
 
+[fuzz]
+runs = 1000
+
+[profile.ci.fuzz]
+runs = 500
+
 [invariant]
 runs = 128
 depth = 128

@@ -354,6 +354,33 @@ contract StatelessFuzz_DSCEngine is Test {
     }
 
     /*//////////////////////////////////////////////////////////////
+              16. testFuzz_ZeroDepositCannotMint
+    //////////////////////////////////////////////////////////////*/
+
+    function testFuzz_ZeroDepositCannotMint(uint256 mintAmount) public {
+        mintAmount = bound(mintAmount, 1, type(uint128).max);
+        // USER has no collateral deposited — any mint attempt must revert
+        vm.prank(USER);
+        vm.expectRevert();
+        dsce.mintDsc(mintAmount);
+    }
+
+    /*//////////////////////////////////////////////////////////////
+                17. testFuzz_NoFreeTokens
+    //////////////////////////////////////////////////////////////*/
+
+    function testFuzz_NoFreeTokens(uint256 amount) public {
+        amount = bound(amount, 1, type(uint128).max);
+        // DSC balance of USER must remain 0 without any collateral deposited
+        // Attempting to mint without collateral reverts; balance never changes
+        vm.prank(USER);
+        vm.expectRevert();
+        dsce.mintDsc(amount);
+
+        assertEq(dsc.balanceOf(USER), 0);
+    }
+
+    /*//////////////////////////////////////////////////////////////
                     15. testFuzz_PriceFeedStale
     //////////////////////////////////////////////////////////////*/
 
