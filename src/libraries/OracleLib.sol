@@ -17,7 +17,7 @@ library OracleLib {
     error OracleLib__StalePrice();
     uint256 private constant TIMEOUT = 3 hours;
 
-    function staleCheckLatestRoundData(AggregatorV3Interface pricefeed) public view returns (uint80, int256, uint256, uint256, uint80) {
+    function staleCheckLatestRoundData(AggregatorV3Interface pricefeed) external view returns (uint80, int256, uint256, uint256, uint80) {
         (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound) = pricefeed.latestRoundData();
 
         uint256 secondsSince = block.timestamp - updatedAt;

@@ -12,6 +12,7 @@ import { ERC20Mock } from "../../test/mocks/ERC20Mock.sol";
 import { MockTransferFromFails } from "../mocks/MockTransferFromFails.sol";
 import { MockTokenNotAllowed } from "../mocks/MockTokenNotAllowed.sol";
 import { MockFailedMintDsc } from "../mocks/MockFailedMintDsc.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 contract DSCEngineTest is Test {
     DeployDSC deployer;
@@ -128,7 +129,7 @@ contract DSCEngineTest is Test {
         vm.startPrank(USER);
         ERC20Mock(address(mockTokenCollateralAddress)).approve(address(mockDsce), AMOUNT_COLLATERAL);
         //Act / Assert
-        vm.expectRevert(DSCEngine.DSCEngine__TransferFailed.selector);
+        vm.expectRevert(abi.encodeWithSelector(SafeERC20.SafeERC20FailedOperation.selector, address(mockTokenCollateralAddress)));
         mockDsce.depositCollateral(address(mockTokenCollateralAddress), AMOUNT_COLLATERAL);
         vm.stopPrank();
     }

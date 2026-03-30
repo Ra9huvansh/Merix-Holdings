@@ -2,6 +2,7 @@
 pragma solidity ^0.8.19;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
@@ -33,6 +34,8 @@ interface IYieldAggregator {
  * WETH conversion uses the live Chainlink oracle via DSCEngine.getTokenAmountFromUsd().
  */
 contract RedemptionContract is Ownable, ReentrancyGuard {
+
+    using SafeERC20 for IERC20;
 
     IERC20            public immutable dsc;
     IERC20            public immutable weth;
@@ -76,14 +79,14 @@ contract RedemptionContract is Ownable, ReentrancyGuard {
         if (weth.balanceOf(address(this)) < wethOut) revert InsufficientWeth();
 
         // 1. Pull DSC from user into this contract
-        dsc.transferFrom(msg.sender, address(this), dscAmount);
+        dsc.safeTransferFrom(msg.sender, address(this), dscAmount);
 
         // 2. Approve DSCEngine to pull DSC from this contract, then burn it
-        dsc.approve(address(dscEngine), dscAmount);
+        dsc.forceApprove(address(dscEngine), dscAmount);
         dscEngine.burnExternal(dscAmount);
 
         // 3. Approve DSCEngine to pull WETH from this contract
-        weth.approve(address(dscEngine), wethOut);
+        weth.forceApprove(address(dscEngine), wethOut);
 
         // 4. DSCEngine deposits WETH as collateral credited to the caller
         dscEngine.depositCollateralFor(msg.sender, address(weth), wethOut);
@@ -98,7 +101,7 @@ contract RedemptionContract is Ownable, ReentrancyGuard {
      * @notice Owner funds the contract with WETH to back future redemptions.
      */
     function fund(uint256 wethAmount) external onlyOwner {
-        weth.transferFrom(msg.sender, address(this), wethAmount);
+        weth.safeTransferFrom(msg.sender, address(this), wethAmount);
         emit Funded(wethAmount);
     }
 

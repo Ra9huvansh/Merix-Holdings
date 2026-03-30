@@ -6,10 +6,10 @@ Contracts are deployed on Sepolia (chain ID 11155111). The `frontend/.env` is co
 
 | Contract | Address |
 |---|---|
-| DSCEngine | `0x9E1D25C37bf92AC2353df4802E123f7D070f4931` |
-| DSC Token | `0x467C5F2153c11feC84A60ea45b28a19F47DA0b15` |
-| YieldAggregator | `0x088025Beb69c5691145c8d6DC43138eF8C4A4d41` |
-| RedemptionContract | `0xFe35219450b891dcb01EcADC59A0e4aD044295f2` |
+| DSCEngine | `0x71840A969A548454BCcfA08cFd1fc723246E20B8` |
+| DSC Token | `0x9893F5C5D5F0cb8a76e9c6c171a86f9144440760` |
+| YieldAggregator | `0x17Bd3ccb92A8eaDB936F4157B17BD871eA64873b` |
+| RedemptionContract | `0x78D71f2938250bF69392aa69E9346800c262898D` |
 | WETH (Sepolia) | `0xdd13E55209Fd76AfE204dBda4007C227904f0a81` |
 | WBTC (Sepolia) | `0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063` |
 

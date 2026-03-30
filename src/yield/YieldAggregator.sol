@@ -2,6 +2,7 @@
 pragma solidity ^0.8.19;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
@@ -21,6 +22,8 @@ import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol
  *   - fundYieldReserve does NOT mint shares — it just adds real DSC to the vault balance.
  */
 contract YieldAggregator is Ownable, ReentrancyGuard {
+
+    using SafeERC20 for IERC20;
 
     struct Strategy {
         string name;
@@ -45,6 +48,8 @@ contract YieldAggregator is Ownable, ReentrancyGuard {
 
     address public redemptionContract;
 
+    uint256 private constant BPS_DIVISOR = 10_000;
+
     // Per-user per-strategy: DSC allocated to each strategy
     mapping(address => mapping(uint256 => uint256)) public userStrategyDeposited;
 
@@ -54,6 +59,8 @@ contract YieldAggregator is Ownable, ReentrancyGuard {
     event Withdrawn(address indexed user, uint256 indexed strategyId, uint256 dscAmount, uint256 profit);
     event YieldReserveFunded(uint256 amount);
     event Harvested(uint256 newYield);
+    event RedemptionContractSet(address indexed redemptionContract);
+    event ProfitDeducted(address indexed user, uint256 amount);
 
     error InvalidStrategy();
     error StrategyInactive();
@@ -96,8 +103,7 @@ contract YieldAggregator is Ownable, ReentrancyGuard {
             ? amount
             : (amount * totalShares) / totalAssets;
 
-        dsc.transferFrom(msg.sender, address(this), amount);
-
+        // CEI: update all state before external call
         totalShares += sharesToMint;
         totalAssets += amount;
 
@@ -105,6 +111,9 @@ contract YieldAggregator is Ownable, ReentrancyGuard {
         userPrincipal[msg.sender] += amount;
         userStrategyDeposited[msg.sender][strategyId] += amount;
         strategies[strategyId].totalDeposited += amount;
+
+        // Interaction last
+        dsc.safeTransferFrom(msg.sender, address(this), amount);
 
         emit Deposited(msg.sender, strategyId, amount, sharesToMint);
     }
@@ -150,7 +159,7 @@ contract YieldAggregator is Ownable, ReentrancyGuard {
         realizedProfit[msg.sender] += profit;
 
         if (dsc.balanceOf(address(this)) < dscAmount) revert InsufficientVaultLiquidity();
-        dsc.transfer(msg.sender, dscAmount);
+        dsc.safeTransfer(msg.sender, dscAmount);
 
         emit Withdrawn(msg.sender, strategyId, dscAmount, profit);
     }
@@ -182,7 +191,7 @@ contract YieldAggregator is Ownable, ReentrancyGuard {
         realizedProfit[msg.sender] += profit;
 
         if (dsc.balanceOf(address(this)) < dscOut) revert InsufficientVaultLiquidity();
-        dsc.transfer(msg.sender, dscOut);
+        dsc.safeTransfer(msg.sender, dscOut);
 
         emit Withdrawn(msg.sender, type(uint256).max, dscOut, profit);
     }
@@ -191,7 +200,9 @@ contract YieldAggregator is Ownable, ReentrancyGuard {
      * @notice Owner sets the authorised RedemptionContract address.
      */
     function setRedemptionContract(address _redemptionContract) external onlyOwner {
+        if (_redemptionContract == address(0)) revert NotRedemptionContract();
         redemptionContract = _redemptionContract;
+        emit RedemptionContractSet(_redemptionContract);
     }
 
     /**
@@ -202,6 +213,7 @@ contract YieldAggregator is Ownable, ReentrancyGuard {
         if (msg.sender != redemptionContract) revert NotRedemptionContract();
         if (realizedProfit[user] < amount) revert InsufficientRealizedProfit();
         realizedProfit[user] -= amount;
+        emit ProfitDeducted(user, amount);
     }
 
     /**
@@ -209,7 +221,7 @@ contract YieldAggregator is Ownable, ReentrancyGuard {
      *         Does NOT mint shares — balance increase is purely to back yield withdrawals.
      */
     function fundYieldReserve(uint256 amount) external onlyOwner {
-        dsc.transferFrom(msg.sender, address(this), amount);
+        dsc.safeTransferFrom(msg.sender, address(this), amount);
         emit YieldReserveFunded(amount);
     }
 
@@ -219,7 +231,8 @@ contract YieldAggregator is Ownable, ReentrancyGuard {
 
     function _harvestAll() internal {
         uint256 newYield;
-        for (uint256 i = 0; i < strategies.length; i++) {
+        uint256 len = strategies.length;
+        for (uint256 i = 0; i < len; i++) {
             newYield += _harvestStrategy(i);
         }
         if (newYield > 0) emit Harvested(newYield);
@@ -230,7 +243,7 @@ contract YieldAggregator is Ownable, ReentrancyGuard {
         uint256 elapsed = block.timestamp - s.lastHarvestTime;
         s.lastHarvestTime = block.timestamp; // Always reset — prevents stale time accumulating on empty strategies
         if (s.totalDeposited == 0 || elapsed == 0) return 0;
-        yieldAmount = (s.totalDeposited * s.apyBps * elapsed) / (365 days * 10_000);
+        yieldAmount = (s.totalDeposited * s.apyBps * elapsed) / (365 days * BPS_DIVISOR);
         s.accruedYield += yieldAmount;
         totalAssets    += yieldAmount;
     }
@@ -272,11 +285,12 @@ contract YieldAggregator is Ownable, ReentrancyGuard {
      */
     function getSimulatedTotalAssets() external view returns (uint256) {
         uint256 sim = totalAssets;
-        for (uint256 i = 0; i < strategies.length; i++) {
+        uint256 len = strategies.length;
+        for (uint256 i = 0; i < len; i++) {
             Strategy storage s = strategies[i];
             if (s.totalDeposited == 0) continue;
             uint256 elapsed = block.timestamp - s.lastHarvestTime;
-            sim += (s.totalDeposited * s.apyBps * elapsed) / (365 days * 10_000);
+            sim += (s.totalDeposited * s.apyBps * elapsed) / (365 days * BPS_DIVISOR);
         }
         return sim;
     }

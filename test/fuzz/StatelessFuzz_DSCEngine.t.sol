@@ -345,11 +345,10 @@ contract StatelessFuzz_DSCEngine is Test {
         dscMinted     = bound(dscMinted,     1, type(uint128).max);
 
         uint256 hf = dsce.calculateHealthFactor(dscMinted, collateralUsd);
-        // Mirror the contract's exact integer-division order to avoid precision mismatch:
-        // step 1: collateralAdjusted = (collateralUsd * 50) / 100
-        // step 2: hf = (collateralAdjusted * 1e18) / dscMinted
-        uint256 collateralAdjusted = (collateralUsd * dsce.getLiquidationThreshold()) / dsce.getLiquidationPrecision();
-        uint256 expected = (collateralAdjusted * dsce.getPrecision()) / dscMinted;
+        // Mirror the contract's single-division formula (no divide-before-multiply):
+        // hf = (collateralUsd * LIQUIDATION_THRESHOLD * PRECISION) / (LIQUIDATION_PRECISION * dscMinted)
+        uint256 expected = (collateralUsd * dsce.getLiquidationThreshold() * dsce.getPrecision())
+            / (dsce.getLiquidationPrecision() * dscMinted);
         assertEq(hf, expected);
     }
 
