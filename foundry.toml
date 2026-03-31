@@ -20,6 +20,9 @@ remappings = [
 [fuzz]
 runs = 1000
 
+[profile.ci]
+offline = false
+
 [profile.ci.fuzz]
 runs = 500
 

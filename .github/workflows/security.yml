@@ -1,0 +1,112 @@
+name: Security CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ─────────────────────────────────────────────────────
+  # Job 1: Forge build + all tests (fuzz + invariant)
+  # ─────────────────────────────────────────────────────
+  forge:
+    name: Forge Build & Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Build
+        run: forge build --sizes
+        env:
+          FOUNDRY_PROFILE: ci
+
+      - name: Run all tests (fuzz + invariant)
+        run: forge test -v
+        env:
+          FOUNDRY_PROFILE: ci
+
+  # ─────────────────────────────────────────────────────
+  # Job 2: Slither static analysis → SARIF → Security tab
+  # ─────────────────────────────────────────────────────
+  slither:
+    name: Slither Analysis
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Run Slither
+        uses: crytic/slither-action@v0.4.0
+        id: slither
+        with:
+          target: "src/"
+          sarif: results.sarif
+          fail-on: none
+          slither-args: "--filter-paths lib,test,script"
+        env:
+          FOUNDRY_PROFILE: ci
+
+      - name: Upload SARIF to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: ${{ steps.slither.outputs.sarif }}
+
+  # ─────────────────────────────────────────────────────
+  # Job 3: Aderyn analysis → report artifact
+  # ─────────────────────────────────────────────────────
+  aderyn:
+    name: Aderyn Analysis
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Cargo bin
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            ~/.cargo/bin
+          key: ${{ runner.os }}-aderyn-v1
+
+      - name: Install Aderyn
+        run: |
+          if ! command -v aderyn &> /dev/null; then
+            cargo install aderyn
+          fi
+
+      - name: Run Aderyn
+        run: aderyn --output aderyn-report.md .
+
+      - name: Upload Aderyn report as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: aderyn-report
+          path: aderyn-report.md
+          retention-days: 30
