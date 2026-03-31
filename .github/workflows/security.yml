@@ -115,6 +115,7 @@ jobs:
 
       - name: Run Aderyn
         run: aderyn --output aderyn-report.md .
+        continue-on-error: true   # aderyn-0.1.9 panics on version-check after writing report
         env:
           FOUNDRY_EVM_VERSION: cancun
 
