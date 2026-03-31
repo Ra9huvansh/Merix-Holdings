@@ -83,12 +83,17 @@ jobs:
         with:
           submodules: recursive
 
-      # Foundry stable (cancun default) lets cyfrin-foundry-config resolve
-      # evm_version correctly without hitting the unsupported "prague" nightly default
       - name: Install Foundry (stable)
         uses: foundry-rs/foundry-toolchain@v1
         with:
           version: stable
+
+      # cyfrin-foundry-config-0.2.1 reads the global Foundry config which may
+      # default to "prague". Force it to "cancun" so Aderyn can parse it.
+      - name: Pin global Foundry evm_version to cancun
+        run: |
+          mkdir -p ~/.config/foundry
+          printf '[profile.default]\nevm_version = "cancun"\n' > ~/.config/foundry/foundry.toml
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -110,6 +115,8 @@ jobs:
 
       - name: Run Aderyn
         run: aderyn --output aderyn-report.md .
+        env:
+          FOUNDRY_EVM_VERSION: cancun
 
       - name: Upload Aderyn report as artifact
         uses: actions/upload-artifact@v4
