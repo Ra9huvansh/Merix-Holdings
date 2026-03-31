@@ -83,6 +83,13 @@ jobs:
         with:
           submodules: recursive
 
+      # Foundry stable (cancun default) lets cyfrin-foundry-config resolve
+      # evm_version correctly without hitting the unsupported "prague" nightly default
+      - name: Install Foundry (stable)
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: stable
+
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
 
@@ -93,7 +100,7 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
             ~/.cargo/bin
-          key: ${{ runner.os }}-aderyn-v1
+          key: ${{ runner.os }}-aderyn-v2
 
       - name: Install Aderyn
         run: |
@@ -106,6 +113,7 @@ jobs:
 
       - name: Upload Aderyn report as artifact
         uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: aderyn-report
           path: aderyn-report.md
