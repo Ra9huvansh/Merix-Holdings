@@ -58,10 +58,10 @@ jobs:
         uses: crytic/slither-action@v0.4.0
         id: slither
         with:
-          target: "src/"
+          target: "."
           sarif: results.sarif
           fail-on: none
-          slither-args: "--filter-paths lib,test,script"
+          slither-args: "--filter-paths lib/,test/,script/"
         env:
           FOUNDRY_PROFILE: ci
 
