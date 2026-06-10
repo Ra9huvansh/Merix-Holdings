@@ -348,6 +348,17 @@ Before signing any unknown transaction in MetaMask, paste the calldata into the 
 
 Runs fully locally with Ollama — no data sent to external servers unless Groq fallback is triggered.
 
+### Protocol Intelligence Terminal
+
+The **Protocol Intelligence Terminal** (Risk Intelligence Terminal) is an advanced analytics dashboard providing deep real-time insights into protocol health and systemic risks. It continuously monitors on-chain data and simulated scenarios through 6 specialized panels:
+
+- **Positions Monitor**: Live view of all active debt positions, highlighting liquidatable or at-risk collateral.
+- **Cascade Simulator**: Stress-tests the protocol by simulating cascading liquidations under custom Ethereum price crash scenarios.
+- **Collateral Concentration**: Analyzes capital distribution across users with HHI (Herfindahl-Hirschman Index) scoring and whale alerts.
+- **Stress Score**: A real-time 0-100 risk rating factoring in health ratios, oracle price velocity, and collateral concentration.
+- **Liquidation Timeline**: Projects future risk utilizing linear regression on historical Chainlink price data.
+- **Backtest Engine**: Runs historical crash scenarios against the current position state to measure survival rates and capital at risk.
+
 ---
 
 ## Tech Stack
